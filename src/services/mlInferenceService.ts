@@ -1,4 +1,4 @@
-import { COGNITIVE_MODEL_CONFIG } from './cognitiveModelConfig';
+﻿import { COGNITIVE_MODEL_CONFIG, CognitiveModelConfigType } from './cognitiveModelConfig';
 import { GameAttempt, GameId, CognitiveSkillId, GAME_COGNITIVE_SKILL_MAP } from '../types';
 
 export interface MLFeatures {
@@ -23,7 +23,28 @@ export interface MLPredictionResult {
 }
 
 export class CognitiveMLInferenceService {
-  private static config = COGNITIVE_MODEL_CONFIG;
+  private static config: CognitiveModelConfigType = COGNITIVE_MODEL_CONFIG;
+
+  /**
+   * Allows injecting or loading a custom model JSON configuration.
+   */
+  static loadModel(customConfig: CognitiveModelConfigType): void {
+    this.config = customConfig;
+  }
+
+  /**
+   * Retrieves current active model configuration.
+   */
+  static getModelConfig(): CognitiveModelConfigType {
+    return this.config;
+  }
+
+  /**
+   * Resets model to the embedded/default configuration.
+   */
+  static resetToDefaultModel(): void {
+    this.config = COGNITIVE_MODEL_CONFIG;
+  }
 
   /**
    * Evaluates the pure neural forward pass given an 8-dimensional feature vector.
@@ -115,7 +136,7 @@ export class CognitiveMLInferenceService {
   }
 
   /**
-   * Extracts real ML features from a patient\'s GameAttempt history for a specific game.
+   * Extracts real ML features from a patient's GameAttempt history for a specific game.
    */
   static extractFeatures(gameId: GameId, attempts: GameAttempt[]): MLFeatures {
     const gameAttempts = attempts
@@ -157,11 +178,12 @@ export class CognitiveMLInferenceService {
     // 3. Response Time (average time in seconds)
     const responseTimeSec = recent.reduce((sum, a) => sum + (a.timeTakenSeconds || 0), 0) / numRecentAttempts;
 
-    // 4. Consecutive Successes (counting unbroken successes backwards from most recent)
+    // 4. Consecutive Successes (counting unbroken successes backwards from most recent, max 6)
     let consecutiveSuccesses = 0;
-    for (const a of recent) {
+    for (const a of gameAttempts) {
       if (a.success) {
         consecutiveSuccesses++;
+        if (consecutiveSuccesses >= 6) break;
       } else {
         break;
       }

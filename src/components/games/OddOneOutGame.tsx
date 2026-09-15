@@ -152,6 +152,10 @@ export const OddOneOutGame: React.FC<OddOneOutGameProps> = ({
   };
 
   useEffect(() => {
+    setLevel(Math.min(5, Math.max(1, initialLevel)));
+  }, [initialLevel]);
+
+  useEffect(() => {
     loadPuzzle(level);
   }, [level, language]);
 
@@ -269,7 +273,7 @@ export const OddOneOutGame: React.FC<OddOneOutGameProps> = ({
       </div>
 
       {/* Gentle Hint Prompt */}
-      <div className="w-full flex justify-center">
+      <div className="w-full flex justify-center mb-4">
         <button
           onClick={() => audioService.speakText(t.games.oddOneOut.autoVoicePrompt, language)}
           className="inline-flex items-center gap-2 text-sage-800 bg-sage-50 hover:bg-sage-100 px-4 py-2 rounded-2xl border border-sage-300 font-bold text-sm shadow-xs transition"
@@ -278,6 +282,7 @@ export const OddOneOutGame: React.FC<OddOneOutGameProps> = ({
           <span>{t.patient.listenAgain}</span>
         </button>
       </div>
+
 
       {/* Success Celebration Feedback Modal */}
       <GameFeedbackModal

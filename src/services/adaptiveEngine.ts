@@ -1,4 +1,4 @@
-import {
+﻿import {
   GameId,
   GameAttempt,
   CognitiveSkillId,
@@ -6,6 +6,24 @@ import {
   GAME_COGNITIVE_SKILL_MAP,
   GAME_SECONDARY_SKILLS_MAP,
 } from '../types';
+import {
+  CognitiveMLInferenceService,
+  MLPredictionResult,
+  MLFeatures,
+} from './mlInferenceService';
+
+export type DecisionSource = 'ml_primary' | 'safety_clamped' | 'fallback_rule' | 'insufficient_data';
+
+export interface DifficultyRecommendation {
+  level: number;                 // Final safe level (1-5)
+  rawPredictedLevel: number;     // Raw ML prediction
+  confidence: number;            // ML confidence (0-1)
+  probabilities: number[];       // 5 probabilities for levels 1-5
+  isMlDriven: boolean;           // True if ML was used
+  decisionType: DecisionSource;  // Decision type
+  reason: string;                // Clinical/activity explanation
+  features?: MLFeatures;         // The 8 features extracted
+}
 
 export interface AdaptiveProfile {
   recommendedLevels: Record<GameId, number>;
@@ -14,6 +32,7 @@ export interface AdaptiveProfile {
   reasonAs: string;
   accuracyRate: number;
   cognitiveAnalytics: CognitiveAnalytics;
+  detailedRecommendations?: Record<GameId, DifficultyRecommendation>;
 }
 
 export const ALL_GAMES: GameId[] = [
@@ -36,14 +55,116 @@ export const ALL_COGNITIVE_SKILLS: CognitiveSkillId[] = [
 ];
 
 export class AdaptiveDifficultyEngine {
-  // Evaluates performance and returns recommended level (1 to 5) for a given game
+  /**
+   * Primary decision maker for game difficulty.
+   * Flow: GameAttempt history -> feature extraction -> local MLP inference ->
+   * predicted difficulty/probabilities -> safety validation -> final difficulty.
+   * Rules are used strictly as fallback / safety clamping / insufficient data handling.
+   */
+  static getDifficultyRecommendation(gameId: GameId, attempts: GameAttempt[]): DifficultyRecommendation {
+    const gameAttempts = attempts
+      .filter((a) => a.gameId === gameId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // 1. Handling insufficient data (cold start)
+    if (gameAttempts.length === 0) {
+      return {
+        level: 1,
+        rawPredictedLevel: 1,
+        confidence: 1.0,
+        probabilities: [1.0, 0.0, 0.0, 0.0, 0.0],
+        isMlDriven: false,
+        decisionType: 'insufficient_data',
+        reason: 'Gentle baseline: Starting at Level 1 for comfortable introduction.',
+      };
+    }
+
+    const currentDifficulty = gameAttempts[0].level;
+
+    // 2. Feature extraction & Local MLP inference (PRIMARY)
+    let mlResult: MLPredictionResult | null = null;
+    try {
+      mlResult = CognitiveMLInferenceService.predictDifficulty(gameId, attempts);
+    } catch {
+      mlResult = null;
+    }
+
+    // 3. Fallback if ML inference is unavailable or invalid
+    if (
+      !mlResult ||
+      typeof mlResult.predictedDifficulty !== 'number' ||
+      isNaN(mlResult.predictedDifficulty) ||
+      mlResult.predictedDifficulty < 1 ||
+      mlResult.predictedDifficulty > 5
+    ) {
+      const fallbackLevel = this.getFallbackRuleLevel(gameId, attempts);
+      return {
+        level: fallbackLevel,
+        rawPredictedLevel: fallbackLevel,
+        confidence: 0.5,
+        probabilities: [0.2, 0.2, 0.2, 0.2, 0.2],
+        isMlDriven: false,
+        decisionType: 'fallback_rule',
+        reason: 'Rule fallback applied due to unavailable neural prediction.',
+      };
+    }
+
+    const rawPredicted = mlResult.predictedDifficulty;
+
+    // 4. Safety Guard: Prevent unsafe sudden difficulty jumps
+    // In dementia interaction, jumping up too quickly causes severe distress.
+    // Max step up: +1 level; max step down: -2 levels.
+    const maxSafe = Math.min(5, currentDifficulty + 1);
+    const minSafe = Math.max(1, currentDifficulty - 2);
+
+    let finalLevel = rawPredicted;
+    let decisionType: DecisionSource = 'ml_primary';
+    let safetySuffix = '';
+
+    if (rawPredicted > maxSafe) {
+      finalLevel = maxSafe;
+      decisionType = 'safety_clamped';
+      safetySuffix = ` (Safety clamped from Level ${rawPredicted} to Level ${finalLevel} to prevent sudden jump).`;
+    } else if (rawPredicted < minSafe) {
+      finalLevel = minSafe;
+      decisionType = 'safety_clamped';
+      safetySuffix = ` (Safety stepped down from Level ${rawPredicted} to Level ${finalLevel} for gradual transition).`;
+    }
+
+    // 5. Final strict clamping to [1, 5]
+    finalLevel = Math.max(1, Math.min(5, finalLevel));
+
+    return {
+      level: finalLevel,
+      rawPredictedLevel: rawPredicted,
+      confidence: mlResult.confidence,
+      probabilities: mlResult.probabilities,
+      features: mlResult.features,
+      isMlDriven: true,
+      decisionType,
+      reason: mlResult.explanation + safetySuffix,
+    };
+  }
+
+  /**
+   * Evaluates performance and returns recommended level (1 to 5) for a given game.
+   * Powered primarily by the local on-device MLP model.
+   */
   static getRecommendedLevel(gameId: GameId, attempts: GameAttempt[]): number {
+    return this.getDifficultyRecommendation(gameId, attempts).level;
+  }
+
+  /**
+   * Rule-based heuristic used SOLELY as a safety fallback when the ML model
+   * or its inputs are unavailable or invalid.
+   */
+  static getFallbackRuleLevel(gameId: GameId, attempts: GameAttempt[]): number {
     const gameAttempts = attempts
       .filter((a) => a.gameId === gameId)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     if (gameAttempts.length === 0) {
-      return 1; // Start with gentlest level
+      return 1;
     }
 
     const recent = gameAttempts.slice(0, 3);
@@ -65,11 +186,15 @@ export class AdaptiveDifficultyEngine {
     return Math.min(5, Math.max(1, lastAttempt.level));
   }
 
-  // Returns safe maximum level allowed for a game (for clamping AI recommendations)
+  // Returns safe maximum level allowed for a game
   static getMaxSafeLevel(gameId: GameId, attempts: GameAttempt[]): number {
-    const currentRec = this.getRecommendedLevel(gameId, attempts);
-    // AI can recommend at most current safe level + 1, never exceeding 5
-    return Math.min(5, currentRec + 1);
+    const gameAttempts = attempts.filter((a) => a.gameId === gameId);
+    if (gameAttempts.length === 0) return 2;
+    const sorted = [...gameAttempts].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    const currentLevel = sorted[0].level;
+    return Math.min(5, currentLevel + 1);
   }
 
   // Clamps an AI-suggested level within safe bounds
@@ -105,7 +230,10 @@ export class AdaptiveDifficultyEngine {
 
   // Aggregates game performance into cognitive skill performance indicators
   // Uses recent weighting (most recent 3 attempts have 1.5x weight)
-  static evaluateCognitiveSkills(attempts: GameAttempt[], patientId: string = 'patient-ramesh-1'): CognitiveAnalytics {
+  static evaluateCognitiveSkills(
+    attempts: GameAttempt[],
+    patientId: string = 'patient-ramesh-1'
+  ): CognitiveAnalytics {
     const totalAttempts = attempts.length;
     const successfulAttempts = attempts.filter((a) => a.success).length;
     const successRate = totalAttempts > 0 ? Math.round((successfulAttempts / totalAttempts) * 100) : 100;
@@ -156,13 +284,11 @@ export class AdaptiveDifficultyEngine {
     ALL_COGNITIVE_SKILLS.forEach((skill) => {
       const items = skillAttempts[skill];
       if (items.length > 0) {
-        // Sort descending by timestamp
         items.sort((a, b) => b.timestamp - a.timestamp);
         let weightedSum = 0;
         let totalWeight = 0;
 
         items.forEach((item, index) => {
-          // Weight: 2.0 for latest, 1.5 for 2nd, 1.2 for 3rd, 1.0 for older
           const weight = index === 0 ? 2.0 : index === 1 ? 1.5 : index === 2 ? 1.2 : 1.0;
           weightedSum += item.score * weight;
           totalWeight += weight;
@@ -225,14 +351,24 @@ export class AdaptiveDifficultyEngine {
 
   // Comprehensive adaptive summary for caregiver & patient prompt
   static evaluate(attempts: GameAttempt[]): AdaptiveProfile {
+    const detailedRecommendations: Record<GameId, DifficultyRecommendation> = {
+      'photo-puzzle': this.getDifficultyRecommendation('photo-puzzle', attempts),
+      'familiar-faces': this.getDifficultyRecommendation('familiar-faces', attempts),
+      'familiar-voices': this.getDifficultyRecommendation('familiar-voices', attempts),
+      'routine-recall': this.getDifficultyRecommendation('routine-recall', attempts),
+      'odd-one-out': this.getDifficultyRecommendation('odd-one-out', attempts),
+      'shape-fit': this.getDifficultyRecommendation('shape-fit', attempts),
+      'matching-family': this.getDifficultyRecommendation('matching-family', attempts),
+    };
+
     const recommendedLevels: Record<GameId, number> = {
-      'photo-puzzle': this.getRecommendedLevel('photo-puzzle', attempts),
-      'familiar-faces': this.getRecommendedLevel('familiar-faces', attempts),
-      'familiar-voices': this.getRecommendedLevel('familiar-voices', attempts),
-      'routine-recall': this.getRecommendedLevel('routine-recall', attempts),
-      'odd-one-out': this.getRecommendedLevel('odd-one-out', attempts),
-      'shape-fit': this.getRecommendedLevel('shape-fit', attempts),
-      'matching-family': this.getRecommendedLevel('matching-family', attempts),
+      'photo-puzzle': detailedRecommendations['photo-puzzle'].level,
+      'familiar-faces': detailedRecommendations['familiar-faces'].level,
+      'familiar-voices': detailedRecommendations['familiar-voices'].level,
+      'routine-recall': detailedRecommendations['routine-recall'].level,
+      'odd-one-out': detailedRecommendations['odd-one-out'].level,
+      'shape-fit': detailedRecommendations['shape-fit'].level,
+      'matching-family': detailedRecommendations['matching-family'].level,
     };
 
     const cognitiveAnalytics = this.evaluateCognitiveSkills(attempts);
@@ -242,10 +378,23 @@ export class AdaptiveDifficultyEngine {
     const successes = attempts.filter((a) => a.success).length;
     const accuracyRate = total > 0 ? Math.round((successes / total) * 100) : 100;
 
-    let reasonEn = 'Patient shows steady comfort. Recommended level tuned to encourage familiarity without stress.';
-    let reasonAs = 'জ্যেষ্ঠজনৰ মানসিক স্থিৰতা সুন্দৰ হৈ আছে। মানসিক চাপ নপৰাকৈ চিনাকি স্তৰত খেলিবলৈ পৰামৰ্শ দিয়া হৈছে।';
+    const topRec = detailedRecommendations[recommendedGame];
+    let reasonEn = 'Neural MLP model tuned levels to encourage familiar engagement without cognitive stress.';
+    let reasonAs = 'ডিভাইচত থকা নিউৰেল মডেলটোৱে মানসিক চাপ নপৰাকৈ চিনাকি স্তৰত খেলিবলৈ পৰামৰ্শ দিছে।';
 
-    if (accuracyRate >= 85 && total >= 3) {
+    if (topRec && topRec.isMlDriven) {
+      const currentLvl = topRec.features?.currentDifficulty ?? 1;
+      if (topRec.level > currentLvl) {
+        reasonEn = `On-device neural network observed high engagement. Promoted ${recommendedGame} to Level ${topRec.level}.`;
+        reasonAs = `শেহতীয়া খেলত সুন্দৰ সঁহাৰি লক্ষ্য কৰি নিউৰেল মডেলে ${recommendedGame} খেলৰ স্তৰ ${topRec.level}-লৈ বৃদ্ধি কৰিছে।`;
+      } else if (topRec.level < currentLvl) {
+        reasonEn = `Slight hesitation detected. On-device neural model gently eased challenge to Level ${topRec.level} for reassurance.`;
+        reasonAs = `কিছু দ্বিধাবোধ লক্ষ্য কৰি নিউৰেল মডেলে মানসিক সকাহৰ বাবে স্তৰ ${topRec.level}-লৈ সলনি কৰিছে।`;
+      } else {
+        reasonEn = `Consistent steady pacing. On-device neural model maintained comfortable Level ${topRec.level}.`;
+        reasonAs = `স্থিৰ প্ৰদৰ্শন। নিউৰেল মডেলে আৰামদায়ক স্তৰ ${topRec.level} বাহাল ৰাখিছে।`;
+      }
+    } else if (accuracyRate >= 85 && total >= 3) {
       reasonEn = 'High cognitive engagement detected over recent sessions. Unlocking higher level challenges for gentle stimulation.';
       reasonAs = 'শেহতীয়া খেলবোৰত খুব ভাল সঁহাৰি দিছে। মন সতেজ ৰাখিবলৈ উচ্চ স্তৰৰ খেল আগবঢ়োৱা হৈছে।';
     } else if (accuracyRate < 60 && total >= 2) {
@@ -260,6 +409,7 @@ export class AdaptiveDifficultyEngine {
       reasonAs,
       accuracyRate,
       cognitiveAnalytics,
+      detailedRecommendations,
     };
   }
 }

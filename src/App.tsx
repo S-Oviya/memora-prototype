@@ -64,13 +64,20 @@ export const App: React.FC = () => {
   };
 
   const handleSelectGame = (gameId: GameId) => {
+    refreshData();
     setActiveGame(gameId);
   };
 
   const handlePlayNextGame = () => {
-    const nextGame = AdaptiveDifficultyEngine.getRecommendedNextGame(gameAttempts);
+    const updatedAttempts = db.getGameAttempts();
+    setGameAttempts(updatedAttempts);
+    const nextGame = AdaptiveDifficultyEngine.getRecommendedNextGame(updatedAttempts);
     setActiveGame(nextGame);
+  };
+
+  const handleBackToHome = () => {
     refreshData();
+    setActiveGame(null);
   };
 
   // Adaptive recommendation
@@ -120,68 +127,47 @@ export const App: React.FC = () => {
               <PhotoPuzzleGame
                 familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             ) : activeGame === 'familiar-faces' ? (
               <FamiliarFacesGame
                 familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             ) : activeGame === 'familiar-voices' ? (
               <FamiliarVoicesGame
                 familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             ) : activeGame === 'routine-recall' ? (
               <RoutineRecallGame
                 routines={routines}
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             ) : activeGame === 'odd-one-out' ? (
               <OddOneOutGame
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             ) : activeGame === 'shape-fit' ? (
               <ShapeFitGame
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             ) : (
               <MatchingFamilyMembersGame
                 familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
-                onBack={() => {
-                  setActiveGame(null);
-                  refreshData();
-                }}
+                onBack={handleBackToHome}
                 onPlayNext={handlePlayNextGame}
               />
             )}

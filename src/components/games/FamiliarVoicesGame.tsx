@@ -33,7 +33,7 @@ export const FamiliarVoicesGame: React.FC<FamiliarVoicesGameProps> = ({
   const startTimeRef = useRef<number>(Date.now());
   const mistakesCountRef = useRef<number>(0);
 
-  const numChoices = level === 1 ? 2 : level === 2 ? 3 : 4;
+  const numChoices = level === 1 ? 2 : level === 2 ? 3 : level === 3 ? 4 : Math.min(familyMembers.length, level === 4 ? 4 : 5);
 
   const playVoiceClip = async (member: FamilyMember) => {
     setIsPlayingAudio(true);
@@ -72,7 +72,7 @@ export const FamiliarVoicesGame: React.FC<FamiliarVoicesGameProps> = ({
     const others = familyMembers.filter((m) => m.id !== target.id);
     const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
 
-    const neededChoices = targetLevel === 1 ? 2 : targetLevel === 2 ? 3 : 4;
+    const neededChoices = targetLevel === 1 ? 2 : targetLevel === 2 ? 3 : targetLevel === 3 ? 4 : Math.min(familyMembers.length, targetLevel === 4 ? 4 : 5);
     const currentChoices = [target, ...shuffledOthers.slice(0, neededChoices - 1)].sort(
       () => Math.random() - 0.5
     );
@@ -84,6 +84,10 @@ export const FamiliarVoicesGame: React.FC<FamiliarVoicesGameProps> = ({
       playVoiceClip(target);
     }, 400);
   };
+
+  useEffect(() => {
+    setLevel(initialLevel);
+  }, [initialLevel]);
 
   useEffect(() => {
     startRound(level);
@@ -273,22 +277,6 @@ export const FamiliarVoicesGame: React.FC<FamiliarVoicesGameProps> = ({
         </p>
       )}
 
-      {/* Level Selector */}
-      <div className="w-full max-w-sm flex items-center justify-center gap-2 mt-2">
-        {[1, 2, 3].map((lvl) => (
-          <button
-            key={lvl}
-            onClick={() => setLevel(lvl)}
-            className={`flex-1 py-3 px-3 rounded-2xl font-bold text-sm sm:text-base border-2 transition-all ${
-              level === lvl
-                ? 'bg-sage-600 text-white border-sage-700 shadow-md scale-105'
-                : 'bg-white text-gray-700 border-sage-200 hover:bg-sage-50'
-            }`}
-          >
-            {t.patient.level} {lvl}
-          </button>
-        ))}
-      </div>
 
       {/* Celebration Feedback Modal */}
       <GameFeedbackModal

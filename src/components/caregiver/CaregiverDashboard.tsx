@@ -131,7 +131,9 @@ export const CaregiverDashboard: React.FC<CaregiverDashboardProps> = ({
         />
       )}
 
-      {activeTab === 'guidance' && <CaregiverGuidanceTab />}
+      {activeTab === 'guidance' && (
+        <CaregiverGuidanceTab patient={patient} attempts={gameAttempts} />
+      )}
     </div>
   );
 };

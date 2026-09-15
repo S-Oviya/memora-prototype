@@ -55,8 +55,8 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
     const target = familyMembers[Math.floor(Math.random() * familyMembers.length)];
     setTargetMember(target);
 
-    // Number of choices by level: L1=2, L2=3, L3=4, L4=4, L5=4
-    const numChoices = lvl === 1 ? 2 : lvl === 2 ? 3 : 4;
+    // Number of choices by level: L1=2, L2=3, L3=4, L4=4, L5=5
+    const numChoices = lvl === 1 ? 2 : lvl === 2 ? 3 : lvl === 3 ? 4 : lvl === 4 ? 4 : Math.min(ALL_RELATIONS.length, 5);
 
     const correctChoice = {
       en: target.relationship,
@@ -76,6 +76,10 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
 
     audioService.speakText(t.games.matchingFamily.autoVoicePrompt, language);
   };
+
+  useEffect(() => {
+    setLevel(Math.min(5, Math.max(1, initialLevel)));
+  }, [initialLevel]);
 
   useEffect(() => {
     setupRound(level);
@@ -195,7 +199,7 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
       </div>
 
       {/* Repeat Audio Prompt Button */}
-      <div className="w-full flex justify-center">
+      <div className="w-full flex justify-center mb-4">
         <button
           onClick={() => audioService.speakText(t.games.matchingFamily.autoVoicePrompt, language)}
           className="inline-flex items-center gap-2 text-sage-800 bg-sage-50 hover:bg-sage-100 px-4 py-2 rounded-2xl border border-sage-300 font-bold text-sm shadow-xs transition"
@@ -204,6 +208,7 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
           <span>{t.patient.listenAgain}</span>
         </button>
       </div>
+
 
       <GameFeedbackModal
         isOpen={showFeedbackModal}

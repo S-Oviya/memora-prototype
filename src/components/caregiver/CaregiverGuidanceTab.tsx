@@ -3,34 +3,42 @@ import { Heart, ChevronDown, ChevronUp, ShieldAlert, Sparkles, MessageCircle, Ca
 import { useLanguage } from '../../locales/LanguageContext';
 import { CAREGIVER_GUIDANCE_TIPS } from '../../services/seedData';
 import { api } from '../../services/api';
-import { AICaregiverInsightResult } from '../../types';
+import { Patient, GameAttempt, AICaregiverInsightResult } from '../../types';
+import { OfflineInsightsService } from '../../services/offlineInsightsService';
+import { db } from '../../services/db';
 
-export const CaregiverGuidanceTab: React.FC = () => {
+interface CaregiverGuidanceTabProps {
+  patient?: Patient;
+  attempts?: GameAttempt[];
+}
+
+export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
+  patient,
+  attempts,
+}) => {
   const { t, language } = useLanguage();
   const [expandedId, setExpandedId] = useState<string | null>('tip-1');
-  const [aiInsight, setAiInsight] = useState<AICaregiverInsightResult | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
+
+  const resolvedPatient = patient || db.getPatient();
+  const resolvedAttempts = attempts || db.getGameAttempts();
+
+  const [aiInsight, setAiInsight] = useState<AICaregiverInsightResult>(() =>
+    OfflineInsightsService.generateOfflineInsights(
+      resolvedPatient.name,
+      resolvedAttempts,
+      language
+    )
+  );
 
   useEffect(() => {
-    let isMounted = true;
-    const loadAiInsight = async () => {
-      setLoadingAi(true);
-      try {
-        const result = await api.getCaregiverInsights('patient-ramesh-1', language);
-        if (isMounted && result) {
-          setAiInsight(result);
-        }
-      } catch (err) {
-        console.warn('Could not fetch AI insights:', err);
-      } finally {
-        if (isMounted) setLoadingAi(false);
-      }
-    };
-    loadAiInsight();
-    return () => {
-      isMounted = false;
-    };
-  }, [language]);
+    // Generate caregiver insights 100% offline from local GameAttempt data
+    const offlineResult = OfflineInsightsService.generateOfflineInsights(
+      resolvedPatient.name,
+      resolvedAttempts,
+      language
+    );
+    setAiInsight(offlineResult);
+  }, [language, resolvedPatient.name, resolvedAttempts]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -82,21 +90,48 @@ export const CaregiverGuidanceTab: React.FC = () => {
               </div>
               <div>
                 <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide">
-                  {aiInsight.isAiPowered ? 'Gemini AI Personalized Insight' : 'Adaptive Engine Guidance'}
+                  {language === 'as' ? 'অন-ডিভাইচ এআই নিৰ্দেশনা' : 'On-Device Cognitive AI Guidance'}
                 </span>
                 <h3 className="text-lg font-black text-gray-900">
-                  {language === 'as' ? 'বাক্তিগত পৰামৰ্শ' : 'Patient-Centered Activity Guidance'}
+                  {language === 'as' ? 'ব্যক্তিগত পৰামৰ্শ' : 'Patient-Centered Activity Guidance'}
                 </h3>
               </div>
             </div>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-              {aiInsight.isAiPowered ? 'AI-Guided' : 'Safe Engine'}
+              {language === 'as' ? 'অফলাইন এআই' : 'On-Device ML'}
             </span>
           </div>
 
           <p className="text-sm font-semibold text-gray-800 leading-relaxed mb-3">
             {aiInsight.summary}
           </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+            <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100">
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                {language === 'as' ? 'দক্ষতা' : 'Strong Area'}
+              </span>
+              <span className="text-xs font-extrabold text-indigo-950">
+                {aiInsight.strongestArea}
+              </span>
+            </div>
+            <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100">
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                {language === 'as' ? 'অনুশীলন' : 'Focus Area'}
+              </span>
+              <span className="text-xs font-extrabold text-amber-900">
+                {aiInsight.practiceArea}
+              </span>
+            </div>
+            <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100 col-span-2 sm:col-span-1">
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                {language === 'as' ? 'নিৰ্দেশিত স্তৰ' : 'Target Level'}
+              </span>
+              <span className="text-xs font-extrabold text-emerald-800">
+                Level {aiInsight.recommendedLevel} ({Math.round(aiInsight.confidence * 100)}%)
+              </span>
+            </div>
+          </div>
 
           <p className="text-xs text-gray-600 leading-relaxed mb-4 bg-white/70 p-3 rounded-2xl border border-indigo-100">
             {aiInsight.reason}

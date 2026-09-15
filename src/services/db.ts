@@ -134,8 +134,15 @@ class DatabaseService {
   // --- Game Attempts & Performance ---
   getGameAttempts(): GameAttempt[] {
     try {
-      const data = localStorage.getItem(KEYS.ATTEMPTS);
-      if (data) return JSON.parse(data);
+      if (typeof localStorage !== 'undefined') {
+        const data = localStorage.getItem(KEYS.ATTEMPTS);
+        if (data !== null) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+        }
+      }
     } catch (e) {
       console.error('Failed to load game attempts', e);
     }
@@ -232,7 +239,9 @@ class DatabaseService {
 
   saveGameAttempts(attempts: GameAttempt[]): void {
     try {
-      localStorage.setItem(KEYS.ATTEMPTS, JSON.stringify(attempts));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(KEYS.ATTEMPTS, JSON.stringify(attempts));
+      }
     } catch (e) {
       console.error('Failed to save game attempts', e);
     }

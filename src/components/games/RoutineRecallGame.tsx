@@ -78,6 +78,10 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
   };
 
   useEffect(() => {
+    setLevel(initialLevel);
+  }, [initialLevel]);
+
+  useEffect(() => {
     startRound(level);
   }, [level, routines]);
 
@@ -292,22 +296,6 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         </div>
       )}
 
-      {/* Level Selector */}
-      <div className="w-full max-w-sm flex items-center justify-center gap-2 mt-2">
-        {[1, 2, 3].map((lvl) => (
-          <button
-            key={lvl}
-            onClick={() => setLevel(lvl)}
-            className={`flex-1 py-3 px-3 rounded-2xl font-bold text-sm sm:text-base border-2 transition-all ${
-              level === lvl
-                ? 'bg-sage-600 text-white border-sage-700 shadow-md scale-105'
-                : 'bg-white text-gray-700 border-sage-200 hover:bg-sage-50'
-            }`}
-          >
-            {t.patient.level} {lvl}
-          </button>
-        ))}
-      </div>
 
       {/* Celebration Feedback Modal */}
       <GameFeedbackModal
