@@ -1,0 +1,26 @@
+{
+  "dataset_name": "memora_synthetic_cognitive_gameplay_v1",
+  "generated_at": "2026-09-12T12:55:18.948279",
+  "total_samples": 3000,
+  "synthetic_notice": "Generated programmatically for prototype development. NOT real clinical trial data.",
+  "feature_summary": {
+    "recent_avg_score": 0,
+    "recent_mistakes": 1,
+    "response_time_sec": 2,
+    "current_difficulty": 3,
+    "consecutive_successes": 4,
+    "num_recent_attempts": 5,
+    "cognitive_domain": 6,
+    "recent_trend": 7
+  },
+  "class_distribution": {
+    "level_1": 565,
+    "level_2": 622,
+    "level_3": 584,
+    "level_4": 556,
+    "level_5": 673
+  },
+  "train_samples": 2400,
+  "validation_samples": 600,
+  "validation_accuracy": 0.96
+}

@@ -1,7 +1,7 @@
 import React from 'react';
-import { TrendingUp, CheckCircle, Clock, Calendar, Sparkles, Award, ArrowUpRight, BarChart2 } from 'lucide-react';
+import { TrendingUp, CheckCircle, Clock, Calendar, Sparkles, Award, ArrowUpRight, BarChart2, Brain, ShieldAlert, Target } from 'lucide-react';
 import { useLanguage } from '../../locales/LanguageContext';
-import { GameAttempt, Patient, GameId } from '../../types';
+import { GameAttempt, Patient, GameId, CognitiveSkillId, GAME_COGNITIVE_SKILL_MAP } from '../../types';
 import { AdaptiveDifficultyEngine } from '../../services/adaptiveEngine';
 
 interface PatientOverviewTabProps {
@@ -39,6 +39,9 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
     'familiar-faces': { name: t.games.faces.title, attempts: [] },
     'familiar-voices': { name: t.games.voices.title, attempts: [] },
     'routine-recall': { name: t.games.routine.title, attempts: [] },
+    'odd-one-out': { name: (t.games as any).oddOneOut?.title || 'Odd One Out', attempts: [] },
+    'shape-fit': { name: (t.games as any).shapeFit?.title || 'Shape Fit', attempts: [] },
+    'matching-family': { name: (t.games as any).matchingFamily?.title || 'Family Match', attempts: [] },
   };
 
   attempts.forEach((a) => {
@@ -57,8 +60,65 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
         return { icon: '🎵', bg: 'bg-amber-100 text-amber-800' };
       case 'routine-recall':
         return { icon: '📅', bg: 'bg-sky-100 text-sky-800' };
+      case 'odd-one-out':
+        return { icon: '🔍', bg: 'bg-purple-100 text-purple-800' };
+      case 'shape-fit':
+        return { icon: '⭐', bg: 'bg-teal-100 text-teal-800' };
+      case 'matching-family':
+      default:
+        return { icon: '👨‍👩‍👧', bg: 'bg-indigo-100 text-indigo-800' };
     }
   };
+
+  // 6 Cognitive Skills calculation (non-medical performance indicators)
+  const skillTypes: CognitiveSkillId[] = [
+    'recall',
+    'recognition',
+    'associative_memory',
+    'problem_solving',
+    'categorization',
+    'visual_spatial',
+  ];
+
+  const getSkillTitle = (skill: CognitiveSkillId) => {
+    switch (skill) {
+      case 'recall': return t.cognitiveSkills?.recall || 'Recall';
+      case 'recognition': return t.cognitiveSkills?.recognition || 'Recognition';
+      case 'associative_memory': return t.cognitiveSkills?.associativeMemory || 'Associative Memory';
+      case 'problem_solving': return t.cognitiveSkills?.problemSolving || 'Problem-solving';
+      case 'categorization': return t.cognitiveSkills?.categorization || 'Categorization';
+      case 'visual_spatial': return t.cognitiveSkills?.visualSpatial || 'Visual-spatial';
+    }
+  };
+
+  const getSkillIcon = (skill: CognitiveSkillId) => {
+    switch (skill) {
+      case 'recall': return '🧠';
+      case 'recognition': return '🌸';
+      case 'associative_memory': return '🔗';
+      case 'problem_solving': return '🧩';
+      case 'categorization': return '🔍';
+      case 'visual_spatial': return '📐';
+    }
+  };
+
+  const skillMetrics = skillTypes.map((skill) => {
+    const matching = attempts.filter(
+      (a) => a.cognitiveSkill === skill || (!a.cognitiveSkill && GAME_COGNITIVE_SKILL_MAP[a.gameId] === skill)
+    );
+    const total = matching.length;
+    const wins = matching.filter((a) => a.success).length;
+    const rate = total > 0 ? Math.round((wins / total) * 100) : 0;
+    return { skill, total, wins, rate };
+  });
+
+  const practicedSkills = skillMetrics.filter((s) => s.total > 0);
+  const strongestSkill = practicedSkills.length > 0
+    ? [...practicedSkills].sort((a, b) => b.rate - a.rate || b.total - a.total)[0]
+    : null;
+  const practiceAreaSkill = practicedSkills.length > 0
+    ? [...practicedSkills].sort((a, b) => a.rate - b.rate || a.total - b.total)[0]
+    : null;
 
   // Recent 5 attempts
   const recentAttempts = [...attempts]
@@ -176,6 +236,98 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
               })}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Cognitive Activity Performance (Non-Medical Activity Performance Indicators) */}
+      <div className="bg-white p-6 rounded-3xl border-2 border-sage-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+              <Brain className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900">
+                {t.cognitiveSkills?.title || 'Cognitive Activity Performance'}
+              </h3>
+              <p className="text-xs text-gray-500 font-medium">
+                {language === 'as' ? '৬টা কাৰ্য্যকলাপ ভিত্তিক সূচক' : '6 activity-based engagement indicators'}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Badges: Strongest & Practice */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {strongestSkill && (
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                <Award className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{t.cognitiveSkills?.strongestArea || 'Strongest Area'}: {getSkillTitle(strongestSkill.skill)}</span>
+              </span>
+            )}
+            {practiceAreaSkill && practiceAreaSkill.skill !== strongestSkill?.skill && (
+              <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full font-bold">
+                <Target className="w-3.5 h-3.5 text-amber-600" />
+                <span>{t.cognitiveSkills?.practiceArea || 'Practice Area'}: {getSkillTitle(practiceAreaSkill.skill)}</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Non-Medical Disclaimer Banner */}
+        <div className="mb-5 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-xs text-slate-600 font-medium">
+          <ShieldAlert className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+          <span>
+            {t.cognitiveSkills?.disclaimer ||
+              'Activity performance indicators reflect engagement and are not clinical or medical measurements.'}
+          </span>
+        </div>
+
+        {/* 6 Cognitive Skill Indicators Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {skillMetrics.map((sm) => {
+            const isTop = strongestSkill?.skill === sm.skill;
+            const isNeedsPractice = practiceAreaSkill?.skill === sm.skill && sm.rate < 70;
+
+            return (
+              <div
+                key={sm.skill}
+                className={`p-4 rounded-2xl border transition-all ${
+                  isTop
+                    ? 'bg-emerald-50/50 border-emerald-200'
+                    : isNeedsPractice
+                    ? 'bg-amber-50/50 border-amber-200'
+                    : 'bg-warm-50/40 border-warm-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{getSkillIcon(sm.skill)}</span>
+                    <span className="font-bold text-gray-900 text-sm">{getSkillTitle(sm.skill)}</span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500">
+                    {sm.total} {language === 'as' ? 'বাৰ' : 'sessions'}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-2">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      sm.rate >= 80 ? 'bg-emerald-600' : sm.rate >= 50 ? 'bg-amber-500' : 'bg-slate-400'
+                    }`}
+                    style={{ width: `${sm.total > 0 ? sm.rate : 0}%` }}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center text-xs font-medium text-gray-600">
+                  <span>{language === 'as' ? 'সফলতা' : 'Accuracy'}</span>
+                  <span className="font-bold text-gray-900">
+                    {sm.total > 0 ? `${sm.rate}%` : (language === 'as' ? 'অপ্ৰশিক্ষিত' : 'Not yet tested')}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

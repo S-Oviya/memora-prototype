@@ -4,6 +4,7 @@ import { useLanguage } from '../../locales/LanguageContext';
 import { FamilyMember } from '../../types';
 import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
+import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
 
 interface FamiliarVoicesGameProps {
@@ -103,15 +104,20 @@ export const FamiliarVoicesGame: React.FC<FamiliarVoicesGameProps> = ({
       const timeTaken = Math.max(3, Math.round((Date.now() - startTimeRef.current) / 1000));
       const score = Math.max(60, 100 - mistakesCountRef.current * 15);
 
-      db.recordGameAttempt({
+      // Record attempt for caregiver with recognition and associative memory
+      const payload = {
         patientId: member.patientId || 'patient-ramesh-1',
-        gameId: 'familiar-voices',
+        gameId: 'familiar-voices' as const,
+        cognitiveSkill: 'recognition' as const,
+        cognitiveSkills: ['recognition', 'associative_memory'] as ('recognition' | 'associative_memory')[],
         level,
         success: true,
         score,
         timeTakenSeconds: timeTaken,
         mistakesCount: mistakesCountRef.current,
-      });
+      };
+      db.recordGameAttempt(payload);
+      api.recordGameAttempt(payload).catch(() => {});
 
       audioService.playSuccessChime();
 

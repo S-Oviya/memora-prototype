@@ -4,6 +4,7 @@ import { useLanguage } from '../../locales/LanguageContext';
 import { FamilyMember } from '../../types';
 import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
+import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
 
 interface FamiliarFacesGameProps {
@@ -59,9 +60,13 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
 
     setChoices(currentChoices);
 
-    // Auto-voice prompt: "Find your loved one..."
+    // Auto-voice prompt: Level 4/5 uses short relation prompt for higher cognitive stimulation
     const promptText =
-      language === 'as'
+      targetLevel >= 4
+        ? format(t.games.faces.questionFindShort, {
+            relation: target.relationshipAs || target.relationship,
+          })
+        : language === 'as'
         ? format(t.games.faces.questionFind, {
             relation: target.relationshipAs || target.relationship,
             name: target.name,
@@ -91,15 +96,18 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
       const score = Math.max(60, 100 - mistakesCountRef.current * 15);
 
       // Record attempt for caregiver
-      db.recordGameAttempt({
+      const payload = {
         patientId: member.patientId || 'patient-ramesh-1',
-        gameId: 'familiar-faces',
+        gameId: 'familiar-faces' as const,
+        cognitiveSkill: 'recognition' as const,
         level,
         success: true,
         score,
         timeTakenSeconds: timeTaken,
         mistakesCount: mistakesCountRef.current,
-      });
+      };
+      db.recordGameAttempt(payload);
+      api.recordGameAttempt(payload).catch(() => {});
 
       // Play family member voice recording automatically!
       if (member.voiceAudioUrl) {

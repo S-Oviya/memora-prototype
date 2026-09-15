@@ -214,20 +214,68 @@ class AudioService {
     return (this.currentAudio !== null && !this.currentAudio.paused) || this.isMelodyPlaying;
   }
 
-  // Spoken voice guidance fallback (SpeechSynthesis)
-  speakText(text: string, lang: 'en' | 'as') {
-    if (!('speechSynthesis' in window)) return;
+  // Returns whether high-quality voice audio is currently supported for a language
+  isVoiceSupported(lang: string): boolean {
+    const supported = ['en', 'as', 'bn', 'ne'];
+    return supported.includes(lang.toLowerCase());
+  }
+
+  // Spoken voice guidance:
+  // 1. Attempts backend Neural TTS (guarantees authentic Assamese, Bengali, Nepali, and English pronunciation)
+  // 2. Falls back to browser SpeechSynthesis if backend is unavailable and matching voice is found
+  // 3. Gracefully resolves without error if no speech engine is available (e.g. for Mizo, Khasi, Nyishi, Kokborok)
+  async speakText(text: string, lang: string = 'en'): Promise<void> {
+    if (!text || !text.trim()) return;
+
+    // First attempt: Backend Neural TTS
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
+    const ttsUrl = `${apiBase}/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}`;
+
     try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.85; // Slower, calmer for elderly
-      utterance.pitch = 1.0;
-      utterance.lang = lang === 'as' ? 'as-IN' : 'en-IN';
-      window.speechSynthesis.speak(utterance);
+      await this.playVoice(ttsUrl);
+      return;
     } catch {
-      // Ignore if speech synthesis is not permitted
+      // Backend TTS unavailable or language not in neural model, fall back to browser Web Speech API
+    }
+
+    // Second attempt: Browser SpeechSynthesis
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.85; // Slower, calmer for elderly
+        utterance.pitch = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const langMap: Record<string, string[]> = {
+          en: ['en-IN', 'en-GB', 'en-US'],
+          as: ['as-IN', 'bn-IN'], // If browser lacks as-IN, bn-IN can articulate Eastern Nagari phonetically
+          bn: ['bn-IN', 'bn-BD'],
+          ne: ['ne-NP'],
+        };
+
+        const targetLocales = langMap[lang.toLowerCase()] || [];
+        if (targetLocales.length > 0 && voices.length > 0) {
+          const matchedVoice = voices.find((v) =>
+            targetLocales.some((loc) => v.lang.toLowerCase().startsWith(loc.toLowerCase()))
+          );
+          if (matchedVoice) {
+            utterance.voice = matchedVoice;
+            utterance.lang = matchedVoice.lang;
+          } else {
+            utterance.lang = targetLocales[0];
+          }
+          window.speechSynthesis.speak(utterance);
+        } else if (lang === 'en') {
+          utterance.lang = 'en-US';
+          window.speechSynthesis.speak(utterance);
+        }
+      } catch {
+        // Ignore synthesis error gracefully
+      }
     }
   }
 }
 
 export const audioService = new AudioService();
+

@@ -1,11 +1,36 @@
-import React, { useState } from 'react';
-import { Heart, ChevronDown, ChevronUp, ShieldAlert, Sparkles, MessageCircle, CalendarCheck, ShieldCheck, Sun } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Heart, ChevronDown, ChevronUp, ShieldAlert, Sparkles, MessageCircle, CalendarCheck, ShieldCheck, Sun, Lightbulb, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../locales/LanguageContext';
 import { CAREGIVER_GUIDANCE_TIPS } from '../../services/seedData';
+import { api } from '../../services/api';
+import { AICaregiverInsightResult } from '../../types';
 
 export const CaregiverGuidanceTab: React.FC = () => {
   const { t, language } = useLanguage();
   const [expandedId, setExpandedId] = useState<string | null>('tip-1');
+  const [aiInsight, setAiInsight] = useState<AICaregiverInsightResult | null>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadAiInsight = async () => {
+      setLoadingAi(true);
+      try {
+        const result = await api.getCaregiverInsights('patient-ramesh-1', language);
+        if (isMounted && result) {
+          setAiInsight(result);
+        }
+      } catch (err) {
+        console.warn('Could not fetch AI insights:', err);
+      } finally {
+        if (isMounted) setLoadingAi(false);
+      }
+    };
+    loadAiInsight();
+    return () => {
+      isMounted = false;
+    };
+  }, [language]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -46,6 +71,60 @@ export const CaregiverGuidanceTab: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* AI Personalized Dynamic Insights Card */}
+      {aiInsight && (
+        <div className="bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white rounded-3xl p-6 border-2 border-indigo-200 shadow-sm">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide">
+                  {aiInsight.isAiPowered ? 'Gemini AI Personalized Insight' : 'Adaptive Engine Guidance'}
+                </span>
+                <h3 className="text-lg font-black text-gray-900">
+                  {language === 'as' ? 'বাক্তিগত পৰামৰ্শ' : 'Patient-Centered Activity Guidance'}
+                </h3>
+              </div>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+              {aiInsight.isAiPowered ? 'AI-Guided' : 'Safe Engine'}
+            </span>
+          </div>
+
+          <p className="text-sm font-semibold text-gray-800 leading-relaxed mb-3">
+            {aiInsight.summary}
+          </p>
+
+          <p className="text-xs text-gray-600 leading-relaxed mb-4 bg-white/70 p-3 rounded-2xl border border-indigo-100">
+            {aiInsight.reason}
+          </p>
+
+          {aiInsight.caregiverSuggestions && aiInsight.caregiverSuggestions.length > 0 && (
+            <div className="space-y-2 mb-3">
+              <h4 className="text-xs font-bold uppercase text-indigo-900 flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                <span>{language === 'as' ? 'পৰামৰ্শসমূহ' : 'Supportive Suggestions'}:</span>
+              </h4>
+              <ul className="space-y-1.5">
+                {aiInsight.caregiverSuggestions.map((sugg, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs text-gray-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5" />
+                    <span>{sugg}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="text-[11px] text-gray-500 italic mt-3 pt-2 border-t border-indigo-100 flex items-center gap-1">
+            <ShieldAlert className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span>{aiInsight.disclaimer}</span>
+          </div>
+        </div>
+      )}
 
       {/* Guidance Cards */}
       <div className="space-y-4">

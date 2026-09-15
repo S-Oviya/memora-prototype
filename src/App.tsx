@@ -14,6 +14,9 @@ import { PhotoPuzzleGame } from './components/games/PhotoPuzzleGame';
 import { FamiliarFacesGame } from './components/games/FamiliarFacesGame';
 import { FamiliarVoicesGame } from './components/games/FamiliarVoicesGame';
 import { RoutineRecallGame } from './components/games/RoutineRecallGame';
+import { OddOneOutGame } from './components/games/OddOneOutGame';
+import { ShapeFitGame } from './components/games/ShapeFitGame';
+import { MatchingFamilyMembersGame } from './components/games/MatchingFamilyMembersGame';
 
 // Caregiver Views
 import { CaregiverDashboard } from './components/caregiver/CaregiverDashboard';
@@ -143,9 +146,37 @@ export const App: React.FC = () => {
                 }}
                 onPlayNext={handlePlayNextGame}
               />
-            ) : (
+            ) : activeGame === 'routine-recall' ? (
               <RoutineRecallGame
                 routines={routines}
+                initialLevel={currentLevelForGame}
+                onBack={() => {
+                  setActiveGame(null);
+                  refreshData();
+                }}
+                onPlayNext={handlePlayNextGame}
+              />
+            ) : activeGame === 'odd-one-out' ? (
+              <OddOneOutGame
+                initialLevel={currentLevelForGame}
+                onBack={() => {
+                  setActiveGame(null);
+                  refreshData();
+                }}
+                onPlayNext={handlePlayNextGame}
+              />
+            ) : activeGame === 'shape-fit' ? (
+              <ShapeFitGame
+                initialLevel={currentLevelForGame}
+                onBack={() => {
+                  setActiveGame(null);
+                  refreshData();
+                }}
+                onPlayNext={handlePlayNextGame}
+              />
+            ) : (
+              <MatchingFamilyMembersGame
+                familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
                 onBack={() => {
                   setActiveGame(null);

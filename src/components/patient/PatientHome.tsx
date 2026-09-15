@@ -58,6 +58,30 @@ export const PatientHome: React.FC<PatientHomeProps> = ({
       bgColor: 'bg-sky-50 border-sky-300 hover:border-sky-500',
       badgeColor: 'bg-sky-100 text-sky-800',
     },
+    {
+      id: 'odd-one-out' as GameId,
+      title: (t.games as any).oddOneOut?.title || 'Odd One Out',
+      desc: (t.games as any).oddOneOut?.desc || 'Find the object that does not belong.',
+      icon: '🔍',
+      bgColor: 'bg-purple-50 border-purple-300 hover:border-purple-500',
+      badgeColor: 'bg-purple-100 text-purple-800',
+    },
+    {
+      id: 'shape-fit' as GameId,
+      title: (t.games as any).shapeFit?.title || 'Shape Fit',
+      desc: (t.games as any).shapeFit?.desc || 'Match shapes into their outlines.',
+      icon: '⭐',
+      bgColor: 'bg-teal-50 border-teal-300 hover:border-teal-500',
+      badgeColor: 'bg-teal-100 text-teal-800',
+    },
+    {
+      id: 'matching-family' as GameId,
+      title: (t.games as any).matchingFamily?.title || 'Family Pairs',
+      desc: (t.games as any).matchingFamily?.desc || 'Connect family members with their names.',
+      icon: '👨‍👩‍👧',
+      bgColor: 'bg-indigo-50 border-indigo-300 hover:border-indigo-500',
+      badgeColor: 'bg-indigo-100 text-indigo-800',
+    },
   ];
 
   const recommendedInfo = gamesConfig.find((g) => g.id === recommendedGame) || gamesConfig[0];

@@ -4,6 +4,7 @@ import { useLanguage } from '../../locales/LanguageContext';
 import { RoutineItem } from '../../types';
 import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
+import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
 
 interface RoutineRecallGameProps {
@@ -46,7 +47,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
 
     let selected: RoutineItem[] = [];
     if (targetLevel === 1) {
-      // Pick 2 items with clear time difference (e.g. morning vs evening or first two)
+      // Pick 2 items with clear time difference
       selected = [sorted[0], sorted[Math.min(sorted.length - 1, 3)]];
     } else if (targetLevel === 2) {
       // Pick 3 items across the day
@@ -55,9 +56,15 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         sorted[Math.floor(sorted.length / 2)],
         sorted[sorted.length - 1],
       ];
-    } else {
+    } else if (targetLevel === 3) {
       // Pick 4 sequential routine items
       selected = sorted.slice(0, Math.min(4, sorted.length));
+    } else if (targetLevel === 4) {
+      // Pick 5 sequential routine items
+      selected = sorted.slice(0, Math.min(5, sorted.length));
+    } else {
+      // Level 5: full day sequence (up to 6 items)
+      selected = sorted.slice(0, Math.min(6, sorted.length));
     }
 
     setTargetItems(selected);
@@ -94,15 +101,18 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         const timeTaken = Math.max(4, Math.round((Date.now() - startTimeRef.current) / 1000));
         const score = Math.max(60, 100 - mistakesCountRef.current * 10);
 
-        db.recordGameAttempt({
+        const payload = {
           patientId: item.patientId || 'patient-ramesh-1',
-          gameId: 'routine-recall',
+          gameId: 'routine-recall' as const,
+          cognitiveSkill: 'recall' as const,
           level,
           success: true,
           score,
           timeTakenSeconds: timeTaken,
           mistakesCount: mistakesCountRef.current,
-        });
+        };
+        db.recordGameAttempt(payload);
+        api.recordGameAttempt(payload).catch(() => {});
 
         audioService.playSuccessChime();
         setTimeout(() => {

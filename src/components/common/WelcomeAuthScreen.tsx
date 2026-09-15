@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Heart, Shield, Play, Sparkles, UserCheck, ArrowRight } from 'lucide-react';
-import { useLanguage } from '../../locales/LanguageContext';
+import { Heart, Shield, Play, Sparkles, UserCheck, ArrowRight, Globe } from 'lucide-react';
+import { useLanguage, SUPPORTED_LANGUAGES } from '../../locales/LanguageContext';
 import { UserRole } from '../../types';
 import { AccessibleButton } from './AccessibleButton';
 
@@ -14,25 +14,22 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FAF7F2] via-[#F4EFE6] to-[#EAE0D2] flex flex-col justify-center items-center px-4 py-8">
       <div className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-sage-200 text-center">
-        {/* Language switch at top of login */}
+        {/* Language selector at top of login */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-warm-100 p-1 rounded-xl border border-warm-200">
-            <button
-              onClick={() => setLanguage('as')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
-                language === 'as' ? 'bg-sage-600 text-white shadow-xs' : 'text-gray-700'
-              }`}
+          <div className="inline-flex items-center gap-2 bg-warm-100 hover:bg-warm-200 px-3 py-1.5 rounded-2xl border border-warm-300 transition">
+            <Globe className="w-4 h-4 text-sage-700 flex-shrink-0" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as any)}
+              className="bg-transparent text-xs font-bold text-gray-800 focus:outline-none cursor-pointer pr-1"
+              aria-label="Select Language"
             >
-              অসমীয়া (Assamese)
-            </button>
-            <button
-              onClick={() => setLanguage('en')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
-                language === 'en' ? 'bg-sage-600 text-white shadow-xs' : 'text-gray-700'
-              }`}
-            >
-              English
-            </button>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="text-gray-900 bg-white font-medium">
+                  {lang.nativeLabel} ({lang.label})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Globe, Heart, Shield, Play, LogOut } from 'lucide-react';
-import { useLanguage } from '../../locales/LanguageContext';
+import { useLanguage, SUPPORTED_LANGUAGES } from '../../locales/LanguageContext';
 import { UserRole } from '../../types';
 import { CaregiverPinModal } from './CaregiverPinModal';
 
@@ -49,30 +49,21 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, patie
 
           {/* Right Controls: Language & Role Switch */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Language Toggle Button */}
-            <div className="flex items-center bg-warm-100 p-1 rounded-xl border border-warm-200">
-              <button
-                onClick={() => setLanguage('as')}
-                className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${
-                  language === 'as'
-                    ? 'bg-sage-600 text-white shadow-sm'
-                    : 'text-gray-700 hover:text-sage-900'
-                }`}
-                title="অসমীয়া"
+            {/* Language Selector supporting 8 Northeast & Regional Languages */}
+            <div className="relative flex items-center bg-warm-100 hover:bg-warm-200 px-2.5 py-1 rounded-xl border border-warm-300 transition">
+              <Globe className="w-4 h-4 text-sage-700 mr-1.5 flex-shrink-0" />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as any)}
+                className="bg-transparent text-xs sm:text-sm font-bold text-gray-800 focus:outline-none cursor-pointer py-1 pr-1"
+                aria-label="Select Language"
               >
-                অসমীয়া
-              </button>
-              <button
-                onClick={() => setLanguage('en')}
-                className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${
-                  language === 'en'
-                    ? 'bg-sage-600 text-white shadow-sm'
-                    : 'text-gray-700 hover:text-sage-900'
-                }`}
-                title="English"
-              >
-                ENG
-              </button>
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code} className="text-gray-900 bg-white font-medium">
+                    {lang.nativeLabel} ({lang.label})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Role Switcher Button */}

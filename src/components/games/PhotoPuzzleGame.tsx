@@ -4,6 +4,7 @@ import { useLanguage } from '../../locales/LanguageContext';
 import { FamilyMember, GameAttempt } from '../../types';
 import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
+import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
 import { AccessibleButton } from '../common/AccessibleButton';
 
@@ -48,8 +49,17 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
   const startTimeRef = useRef<number>(Date.now());
   const mistakesCountRef = useRef<number>(0);
 
-  // Grid dimensions
-  const gridConfig = level === 1 ? { rows: 2, cols: 2, total: 4 } : level === 2 ? { rows: 2, cols: 3, total: 6 } : { rows: 3, cols: 3, total: 9 };
+  // Grid dimensions for Levels 1-5
+  const gridConfig =
+    level === 1
+      ? { rows: 2, cols: 2, total: 4 }
+      : level === 2
+      ? { rows: 2, cols: 3, total: 6 }
+      : level === 3
+      ? { rows: 3, cols: 3, total: 9 }
+      : level === 4
+      ? { rows: 3, cols: 4, total: 12 }
+      : { rows: 4, cols: 4, total: 16 };
 
   // Setup puzzle
   const setupPuzzle = (targetLevel: number, member: FamilyMember) => {
@@ -60,7 +70,16 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
     setShowOriginal(false);
     setShowFeedbackModal(false);
 
-    const config = targetLevel === 1 ? { total: 4 } : targetLevel === 2 ? { total: 6 } : { total: 9 };
+    const config =
+      targetLevel === 1
+        ? { total: 4 }
+        : targetLevel === 2
+        ? { total: 6 }
+        : targetLevel === 3
+        ? { total: 9 }
+        : targetLevel === 4
+        ? { total: 12 }
+        : { total: 16 };
     const numTiles = config.total;
 
     // Create tiles array
@@ -136,15 +155,18 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
     const score = Math.max(50, 100 - mistakesCountRef.current * 8);
 
     // Save attempt for caregiver analytics
-    db.recordGameAttempt({
+    const payload = {
       patientId: selectedMember.patientId || 'patient-ramesh-1',
-      gameId: 'photo-puzzle',
+      gameId: 'photo-puzzle' as const,
+      cognitiveSkill: 'problem_solving' as const,
       level,
       success: true,
       score,
       timeTakenSeconds: timeTaken,
       mistakesCount: mistakesCountRef.current,
-    });
+    };
+    db.recordGameAttempt(payload);
+    api.recordGameAttempt(payload).catch(() => {});
 
     // Speak or chime
     audioService.playSuccessChime();

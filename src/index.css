@@ -4,14 +4,19 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', sans-serif;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Assamese text styling */
-  [lang="as"], .font-assamese {
-    font-family: 'Noto Serif Bengali', 'Vrinda', 'Kalpurush', sans-serif;
+  /* Assamese & Bengali Eastern Nagari text styling */
+  [lang="as"], [lang="bn"], .font-assamese, .font-bengali {
+    font-family: 'Noto Sans Bengali', 'Noto Serif Bengali', 'Vrinda', 'Kalpurush', 'SolaimanLipi', system-ui, sans-serif;
+  }
+
+  /* Nepali Devanagari text styling */
+  [lang="ne"], .font-nepali {
+    font-family: 'Noto Sans Devanagari', 'Mangal', 'Kokila', system-ui, sans-serif;
   }
 }
 

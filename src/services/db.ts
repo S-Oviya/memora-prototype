@@ -1,4 +1,4 @@
-import { Patient, FamilyMember, RoutineItem, FavoriteMusic, GameAttempt, GameId } from '../types';
+import { Patient, FamilyMember, RoutineItem, FavoriteMusic, GameAttempt, GameId, GAME_COGNITIVE_SKILL_MAP } from '../types';
 import { INITIAL_PATIENT, INITIAL_FAMILY_MEMBERS, INITIAL_ROUTINES, INITIAL_MUSIC } from './seedData';
 
 const KEYS = {
@@ -145,6 +145,7 @@ class DatabaseService {
         id: 'att-1',
         patientId: 'patient-ramesh-1',
         gameId: 'photo-puzzle',
+        cognitiveSkill: 'problem_solving',
         level: 1,
         success: true,
         score: 95,
@@ -156,6 +157,7 @@ class DatabaseService {
         id: 'att-2',
         patientId: 'patient-ramesh-1',
         gameId: 'familiar-faces',
+        cognitiveSkill: 'recognition',
         level: 1,
         success: true,
         score: 100,
@@ -167,6 +169,7 @@ class DatabaseService {
         id: 'att-3',
         patientId: 'patient-ramesh-1',
         gameId: 'familiar-voices',
+        cognitiveSkill: 'recognition',
         level: 1,
         success: true,
         score: 90,
@@ -178,6 +181,7 @@ class DatabaseService {
         id: 'att-4',
         patientId: 'patient-ramesh-1',
         gameId: 'routine-recall',
+        cognitiveSkill: 'recall',
         level: 1,
         success: true,
         score: 100,
@@ -189,12 +193,37 @@ class DatabaseService {
         id: 'att-5',
         patientId: 'patient-ramesh-1',
         gameId: 'photo-puzzle',
+        cognitiveSkill: 'problem_solving',
         level: 2,
         success: true,
         score: 85,
         timeTakenSeconds: 45,
         mistakesCount: 2,
         timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      },
+      {
+        id: 'att-6',
+        patientId: 'patient-ramesh-1',
+        gameId: 'odd-one-out',
+        cognitiveSkill: 'categorization',
+        level: 1,
+        success: true,
+        score: 80,
+        timeTakenSeconds: 25,
+        mistakesCount: 1,
+        timestamp: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
+      },
+      {
+        id: 'att-7',
+        patientId: 'patient-ramesh-1',
+        gameId: 'matching-family',
+        cognitiveSkill: 'associative_memory',
+        level: 1,
+        success: true,
+        score: 85,
+        timeTakenSeconds: 20,
+        mistakesCount: 1,
+        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       },
     ];
     this.saveGameAttempts(initialAttempts);
@@ -209,9 +238,11 @@ class DatabaseService {
     }
   }
 
-  recordGameAttempt(attempt: Omit<GameAttempt, 'id' | 'timestamp'>): GameAttempt {
+  recordGameAttempt(attempt: Omit<GameAttempt, 'id' | 'timestamp' | 'cognitiveSkill'> & { cognitiveSkill?: any }): GameAttempt {
+    const cognitiveSkill = attempt.cognitiveSkill || GAME_COGNITIVE_SKILL_MAP[attempt.gameId] || 'problem_solving';
     const fullAttempt: GameAttempt = {
       ...attempt,
+      cognitiveSkill,
       id: 'att-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       timestamp: new Date().toISOString(),
     };
