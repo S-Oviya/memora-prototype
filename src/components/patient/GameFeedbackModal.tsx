@@ -12,6 +12,7 @@ interface GameFeedbackModalProps {
   gameTitle: string;
   customMessage?: string;
   musicTitle?: string;
+  nextButtonText?: string;
 }
 
 export const GameFeedbackModal: React.FC<GameFeedbackModalProps> = ({
@@ -21,6 +22,7 @@ export const GameFeedbackModal: React.FC<GameFeedbackModalProps> = ({
   gameTitle,
   customMessage,
   musicTitle,
+  nextButtonText,
 }) => {
   const { t, language } = useLanguage();
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
@@ -129,7 +131,7 @@ export const GameFeedbackModal: React.FC<GameFeedbackModalProps> = ({
             }}
             className="w-full"
           >
-            {t.patient.playNextGame}
+            {nextButtonText || t.patient.playNextGame}
           </AccessibleButton>
 
           <AccessibleButton

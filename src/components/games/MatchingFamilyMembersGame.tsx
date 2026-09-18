@@ -22,6 +22,8 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
 }) => {
   const { t, language } = useLanguage();
   const [level, setLevel] = useState<number>(Math.min(5, Math.max(1, initialLevel)));
+  const [nextLevel, setNextLevel] = useState<number>(() => Math.min(5, Math.max(1, initialLevel)));
+  const [isLevel5Passed, setIsLevel5Passed] = useState<boolean>(false);
   const [targetMember, setTargetMember] = useState<FamilyMember | null>(null);
   const [relationChoices, setRelationChoices] = useState<{ en: string; as: string }[]>([]);
   const [selectedRelation, setSelectedRelation] = useState<string | null>(null);
@@ -109,7 +111,10 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
   };
 
   useEffect(() => {
-    setLevel(Math.min(5, Math.max(1, initialLevel)));
+    const clamped = Math.min(5, Math.max(1, initialLevel));
+    setLevel(clamped);
+    setNextLevel(clamped);
+    setIsLevel5Passed(false);
   }, [initialLevel]);
 
   useEffect(() => {
@@ -142,6 +147,12 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
 
       db.recordGameAttempt(payload);
       api.recordGameAttempt(payload).catch(() => {});
+
+      // Evaluate progression: pass moves up a level (max 5), struggle/fail moves down (min 1)
+      const isPass = payload.success && payload.mistakesCount <= 1 && payload.score >= 70;
+      const computedNext = isPass ? Math.min(5, level + 1) : Math.max(1, level - 1);
+      setNextLevel(computedNext);
+      setIsLevel5Passed(isPass && level >= 5);
 
       // Play soothing voice or chime
       if (targetMember.voiceAudioUrl) {
@@ -245,9 +256,15 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
         isOpen={showFeedbackModal}
         gameTitle={t.games.matchingFamily.title}
         customMessage={t.games.matchingFamily.correctMessage}
+        nextButtonText={isLevel5Passed ? 'Next Activity' : 'Next Level'}
         onPlayNext={() => {
           setShowFeedbackModal(false);
-          onPlayNext();
+          if (isLevel5Passed) {
+            onPlayNext();
+          } else {
+            setLevel(nextLevel);
+            setupRound(nextLevel);
+          }
         }}
         onBackHome={() => {
           setShowFeedbackModal(false);

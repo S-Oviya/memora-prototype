@@ -3,6 +3,7 @@ import { Heart, Shield, Play, Sparkles, UserCheck, ArrowRight, Globe } from 'luc
 import { useLanguage, SUPPORTED_LANGUAGES } from '../../locales/LanguageContext';
 import { UserRole } from '../../types';
 import { AccessibleButton } from './AccessibleButton';
+import { CaregiverPinModal } from './CaregiverPinModal';
 
 interface WelcomeAuthScreenProps {
   onSelectRole: (role: UserRole) => void;
@@ -10,6 +11,16 @@ interface WelcomeAuthScreenProps {
 
 export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRole }) => {
   const { t, language, setLanguage } = useLanguage();
+  const [showPinModal, setShowPinModal] = useState(false);
+
+  const handleCaregiverClick = () => {
+    setShowPinModal(true);
+  };
+
+  const handlePinSuccess = () => {
+    setShowPinModal(false);
+    onSelectRole('caregiver');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FAF7F2] via-[#F4EFE6] to-[#EAE0D2] flex flex-col justify-center items-center px-4 py-8">
@@ -80,7 +91,7 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
 
           {/* Caregiver Role Button */}
           <button
-            onClick={() => onSelectRole('caregiver')}
+            onClick={handleCaregiverClick}
             className="w-full text-left p-5 rounded-3xl bg-white hover:bg-warm-50 border-3 border-warm-300 hover:border-warm-400 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
@@ -105,6 +116,12 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
           {t.auth.demoNotice}
         </p>
       </div>
+
+      <CaregiverPinModal
+        isOpen={showPinModal}
+        onClose={() => setShowPinModal(false)}
+        onSuccess={handlePinSuccess}
+      />
     </div>
   );
 };

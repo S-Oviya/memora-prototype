@@ -144,6 +144,8 @@ export const ShapeFitGame: React.FC<ShapeFitGameProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const [level, setLevel] = useState<number>(Math.min(5, Math.max(1, initialLevel)));
+  const [nextLevel, setNextLevel] = useState<number>(() => Math.min(5, Math.max(1, initialLevel)));
+  const [isLevel5Passed, setIsLevel5Passed] = useState<boolean>(false);
   const [targetShape, setTargetShape] = useState<ShapeItem>(ALL_SHAPES[0]);
   const [choices, setChoices] = useState<ShapeItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -180,7 +182,10 @@ export const ShapeFitGame: React.FC<ShapeFitGameProps> = ({
   };
 
   useEffect(() => {
-    setLevel(Math.min(5, Math.max(1, initialLevel)));
+    const clamped = Math.min(5, Math.max(1, initialLevel));
+    setLevel(clamped);
+    setNextLevel(clamped);
+    setIsLevel5Passed(false);
   }, [initialLevel]);
 
   useEffect(() => {
@@ -212,6 +217,12 @@ export const ShapeFitGame: React.FC<ShapeFitGameProps> = ({
 
       db.recordGameAttempt(payload);
       api.recordGameAttempt(payload).catch(() => {});
+
+      // Evaluate progression: pass moves up a level (max 5), struggle/fail moves down (min 1)
+      const isPass = payload.success && payload.mistakesCount <= 1 && payload.score >= 70;
+      const computedNext = isPass ? Math.min(5, level + 1) : Math.max(1, level - 1);
+      setNextLevel(computedNext);
+      setIsLevel5Passed(isPass && level >= 5);
 
       audioService.playSuccessChime();
       setTimeout(() => {
@@ -328,9 +339,15 @@ export const ShapeFitGame: React.FC<ShapeFitGameProps> = ({
         isOpen={showFeedbackModal}
         gameTitle={(t.games as any).shapeFit?.title || 'Shape Fit'}
         customMessage={(t.games as any).shapeFit?.correctMessage}
+        nextButtonText={isLevel5Passed ? 'Next Activity' : 'Next Level'}
         onPlayNext={() => {
           setShowFeedbackModal(false);
-          onPlayNext();
+          if (isLevel5Passed) {
+            onPlayNext();
+          } else {
+            setLevel(nextLevel);
+            setupRound(nextLevel);
+          }
         }}
         onBackHome={() => {
           setShowFeedbackModal(false);

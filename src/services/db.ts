@@ -8,6 +8,7 @@ const KEYS = {
   MUSIC: 'memora_music',
   ATTEMPTS: 'memora_game_attempts',
   CAREGIVER_PIN: 'memora_caregiver_pin',
+  CAREGIVER_PIN_CHANGED: 'memora_caregiver_pin_changed',
   ACTIVE_ROLE: 'memora_active_role',
 };
 
@@ -261,13 +262,42 @@ class DatabaseService {
     return fullAttempt;
   }
 
-  // --- Caregiver PIN ---
+  // --- Caregiver Password / PIN ---
+  isCaregiverPinChanged(): boolean {
+    return localStorage.getItem(KEYS.CAREGIVER_PIN_CHANGED) === 'true';
+  }
+
   getCaregiverPin(): string {
-    return localStorage.getItem(KEYS.CAREGIVER_PIN) || '1234';
+    const stored = localStorage.getItem(KEYS.CAREGIVER_PIN);
+    if (stored) return stored;
+    return '1234';
+  }
+
+  verifyCaregiverPin(inputPin: string): boolean {
+    if (!inputPin) return false;
+    const isChanged = this.isCaregiverPinChanged();
+    if (isChanged) {
+      const stored = localStorage.getItem(KEYS.CAREGIVER_PIN);
+      return Boolean(stored && inputPin === stored);
+    }
+    // Initial setup password: only '1234' is accepted before the password is changed
+    return inputPin === '1234';
   }
 
   setCaregiverPin(pin: string): void {
     localStorage.setItem(KEYS.CAREGIVER_PIN, pin);
+    localStorage.setItem(KEYS.CAREGIVER_PIN_CHANGED, 'true');
+  }
+
+  changeCaregiverPassword(currentPassword: string, newPassword: string): { success: boolean; error?: string } {
+    if (!newPassword || newPassword.trim() === '') {
+      return { success: false, error: 'New password cannot be empty.' };
+    }
+    if (!this.verifyCaregiverPin(currentPassword)) {
+      return { success: false, error: 'Current password is incorrect.' };
+    }
+    this.setCaregiverPin(newPassword);
+    return { success: true };
   }
 
   // --- Active Role ---

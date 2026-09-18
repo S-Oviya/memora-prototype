@@ -28,7 +28,9 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
   onPlayNext,
 }) => {
   const { t, language } = useLanguage();
-  const [level, setLevel] = useState<number>(initialLevel);
+  const [level, setLevel] = useState<number>(() => Math.max(1, Math.min(5, initialLevel)));
+  const [nextLevel, setNextLevel] = useState<number>(() => Math.max(1, Math.min(5, initialLevel)));
+  const [isLevel5Passed, setIsLevel5Passed] = useState<boolean>(false);
   const [selectedMember, setSelectedMember] = useState<FamilyMember>(() => {
     return familyMembers[0] || {
       id: 'default',
@@ -137,7 +139,10 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
   };
 
   useEffect(() => {
-    setLevel(Math.max(1, Math.min(5, initialLevel)));
+    const clamped = Math.max(1, Math.min(5, initialLevel));
+    setLevel(clamped);
+    setNextLevel(clamped);
+    setIsLevel5Passed(false);
   }, [initialLevel]);
 
   useEffect(() => {
@@ -202,6 +207,12 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
     };
     db.recordGameAttempt(payload);
     api.recordGameAttempt(payload).catch(() => {});
+
+    // Evaluate progression: pass moves up a level (max 5), struggle/fail moves down (min 1)
+    const isPass = payload.success && payload.mistakesCount <= 2 && payload.score >= 70;
+    const computedNext = isPass ? Math.min(5, level + 1) : Math.max(1, level - 1);
+    setNextLevel(computedNext);
+    setIsLevel5Passed(isPass && level >= 5);
 
     // Speak or chime
     audioService.playSuccessChime();
@@ -357,9 +368,19 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
         isOpen={showFeedbackModal}
         gameTitle={t.games.puzzle.title}
         customMessage={t.games.puzzle.completed}
+        nextButtonText={isLevel5Passed ? 'Next Activity' : 'Next Level'}
         onPlayNext={() => {
           setShowFeedbackModal(false);
-          onPlayNext();
+          if (isLevel5Passed) {
+            onPlayNext();
+          } else {
+            setLevel(nextLevel);
+            if (familyMembers.length > 0) {
+              const nextMember = familyMembers[Math.floor(Math.random() * familyMembers.length)];
+              setSelectedMember(nextMember);
+              setupPuzzle(nextLevel, nextMember);
+            }
+          }
         }}
         onBackHome={() => {
           setShowFeedbackModal(false);

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Lock, Delete, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, Delete, X, Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '../../locales/LanguageContext';
 import { db } from '../../services/db';
 import { audioService } from '../../services/audioService';
@@ -14,31 +14,24 @@ export const CaregiverPinModal: React.FC<CaregiverPinModalProps> = ({ isOpen, on
   const { t, language } = useLanguage();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPin('');
+      setError(false);
+      setShowPassword(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleDigit = (digit: string) => {
-    audioService.playTapSound();
-    if (pin.length < 4) {
-      const nextPin = pin + digit;
-      setPin(nextPin);
-      setError(false);
-
-      if (nextPin.length === 4) {
-        verifyPin(nextPin);
-      }
-    }
-  };
-
-  const handleBackspace = () => {
-    audioService.playTapSound();
-    setPin(prev => prev.slice(0, -1));
-    setError(false);
-  };
+  const targetLength = db.getCaregiverPin().length;
 
   const verifyPin = (code: string) => {
-    const savedPin = db.getCaregiverPin();
-    if (code === savedPin || code === '1234') {
+    if (!code) return;
+    const isValid = db.verifyCaregiverPin(code);
+    if (isValid) {
       audioService.playSuccessChime();
       setPin('');
       onSuccess();
@@ -51,10 +44,22 @@ export const CaregiverPinModal: React.FC<CaregiverPinModalProps> = ({ isOpen, on
     }
   };
 
-  const handleQuickBypass = () => {
-    audioService.playSuccessChime();
-    setPin('');
-    onSuccess();
+  const handleDigit = (digit: string) => {
+    audioService.playTapSound();
+    const nextPin = pin + digit;
+    setPin(nextPin);
+    setError(false);
+
+    // Auto-verify if typed length matches the configured password length
+    if (nextPin.length === targetLength) {
+      verifyPin(nextPin);
+    }
+  };
+
+  const handleBackspace = () => {
+    audioService.playTapSound();
+    setPin((prev) => prev.slice(0, -1));
+    setError(false);
   };
 
   return (
@@ -73,29 +78,45 @@ export const CaregiverPinModal: React.FC<CaregiverPinModalProps> = ({ isOpen, on
           </button>
         </div>
 
-        <p className="text-sm text-gray-600 mb-6 text-center">
+        <p className="text-sm text-gray-600 mb-5 text-center font-medium">
           {t.app.caregiverPinPrompt}
         </p>
 
-        {/* PIN Dots display */}
-        <div className="flex justify-center gap-4 mb-6">
-          {[0, 1, 2, 3].map((idx) => (
-            <div
-              key={idx}
-              className={`w-5 h-5 rounded-full border-2 transition-all duration-200 ${
-                pin.length > idx
-                  ? error
-                    ? 'bg-red-500 border-red-500 scale-110'
-                    : 'bg-sage-600 border-sage-600 scale-110'
-                  : 'border-gray-300 bg-gray-50'
-              }`}
-            />
-          ))}
+        {/* Accessible Password Input with Show/Hide toggle */}
+        <div className="relative mb-4">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={pin}
+            onChange={(e) => {
+              const val = e.target.value;
+              setPin(val);
+              setError(false);
+              if (val.length === targetLength) {
+                verifyPin(val);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                verifyPin(pin);
+              }
+            }}
+            placeholder="••••"
+            autoFocus
+            className="w-full text-center text-xl sm:text-2xl tracking-widest font-bold py-3 pl-8 pr-12 rounded-2xl border-2 border-sage-300 focus:border-sage-500 focus:ring-4 focus:ring-sage-100 outline-none bg-sage-50/50 text-gray-900 transition"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1.5 rounded-lg focus:outline-none"
+            title={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
         </div>
 
         {error && (
-          <p className="text-red-600 text-center text-sm font-semibold mb-4 animate-shake">
-            {language === 'as' ? 'ভুল PIN, অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক' : 'Incorrect PIN, please try again'}
+          <p className="text-red-600 text-center text-sm font-semibold mb-3 animate-shake">
+            {language === 'as' ? 'ভুল পাছৱৰ্ড / PIN, অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক' : 'Incorrect password, please try again'}
           </p>
         )}
 
@@ -105,34 +126,38 @@ export const CaregiverPinModal: React.FC<CaregiverPinModalProps> = ({ isOpen, on
             <button
               key={digit}
               onClick={() => handleDigit(digit)}
-              className="h-16 text-2xl font-bold bg-warm-50 hover:bg-warm-100 active:bg-sage-200 text-gray-800 rounded-2xl border-2 border-warm-200 shadow-sm transition"
+              className="h-14 sm:h-16 text-2xl font-bold bg-warm-50 hover:bg-warm-100 active:bg-sage-200 text-gray-800 rounded-2xl border-2 border-warm-200 shadow-sm transition"
             >
               {digit}
             </button>
           ))}
+
+          {/* Default Password Button */}
           <button
-            onClick={handleQuickBypass}
-            className="h-16 text-xs font-semibold bg-sage-50 hover:bg-sage-100 text-sage-700 rounded-2xl border-2 border-sage-200"
+            type="button"
+            onClick={() => {
+              setPin('1234');
+              verifyPin('1234');
+            }}
+            className="h-14 sm:h-16 flex items-center justify-center font-bold rounded-2xl border-2 border-warm-200 bg-warm-50 hover:bg-warm-100 active:bg-sage-200 text-gray-700 shadow-sm transition text-[11px] sm:text-xs text-center leading-tight p-1"
           >
-            {language === 'as' ? 'ডেমো প্ৰৱেশ' : 'Demo Pass'}
+            Default Password: 1234
           </button>
+
           <button
             onClick={() => handleDigit('0')}
-            className="h-16 text-2xl font-bold bg-warm-50 hover:bg-warm-100 active:bg-sage-200 text-gray-800 rounded-2xl border-2 border-warm-200 shadow-sm transition"
+            className="h-14 sm:h-16 text-2xl font-bold bg-warm-50 hover:bg-warm-100 active:bg-sage-200 text-gray-800 rounded-2xl border-2 border-warm-200 shadow-sm transition"
           >
             0
           </button>
           <button
             onClick={handleBackspace}
-            className="h-16 flex items-center justify-center bg-warm-50 hover:bg-warm-100 text-gray-700 rounded-2xl border-2 border-warm-200 shadow-sm transition"
+            className="h-14 sm:h-16 flex items-center justify-center bg-warm-50 hover:bg-warm-100 text-gray-700 rounded-2xl border-2 border-warm-200 shadow-sm transition"
+            aria-label="Backspace"
           >
             <Delete className="w-6 h-6" />
           </button>
         </div>
-
-        <p className="text-xs text-gray-400 text-center">
-          {t.app.defaultPinHint}
-        </p>
       </div>
     </div>
   );

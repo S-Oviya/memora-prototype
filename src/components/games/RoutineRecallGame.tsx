@@ -23,6 +23,8 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const [level, setLevel] = useState<number>(Math.max(1, Math.min(5, initialLevel)));
+  const [nextLevel, setNextLevel] = useState<number>(() => Math.max(1, Math.min(5, initialLevel)));
+  const [isLevel5Passed, setIsLevel5Passed] = useState<boolean>(false);
 
   // Challenge items to be arranged in chronological order
   const [targetItems, setTargetItems] = useState<RoutineItem[]>([]);
@@ -85,7 +87,10 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
   };
 
   useEffect(() => {
-    setLevel(Math.max(1, Math.min(5, initialLevel)));
+    const clamped = Math.max(1, Math.min(5, initialLevel));
+    setLevel(clamped);
+    setNextLevel(clamped);
+    setIsLevel5Passed(false);
   }, [initialLevel]);
 
   useEffect(() => {
@@ -124,6 +129,12 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         };
         db.recordGameAttempt(payload);
         api.recordGameAttempt(payload).catch(() => {});
+
+        // Evaluate progression: pass moves up a level (max 5), struggle/fail moves down (min 1)
+        const isPass = payload.success && payload.mistakesCount <= 2 && payload.score >= 70;
+        const computedNext = isPass ? Math.min(5, level + 1) : Math.max(1, level - 1);
+        setNextLevel(computedNext);
+        setIsLevel5Passed(isPass && level >= 5);
 
         audioService.playSuccessChime();
         setTimeout(() => {
@@ -165,11 +176,17 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
           label: language === 'as' ? 'সন্ধিয়া' : 'Evening',
           bg: 'bg-indigo-100 text-indigo-800',
         };
+      case 'night':
+        return {
+          icon: <Moon className="w-4 h-4 text-purple-500" />,
+          label: language === 'as' ? 'নিশা' : 'Night',
+          bg: 'bg-purple-100 text-purple-800',
+        };
       default:
         return {
-          icon: <Clock className="w-4 h-4 text-gray-500" />,
-          label: language === 'as' ? 'ৰুটিন' : 'Daily',
-          bg: 'bg-gray-100 text-gray-800',
+          icon: <Sun className="w-4 h-4 text-sage-600" />,
+          label: language === 'as' ? 'দৈনন্দিন' : 'Daily',
+          bg: 'bg-sage-100 text-sage-800',
         };
     }
   };
@@ -309,9 +326,15 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         isOpen={showFeedbackModal}
         gameTitle={t.games.routine.title}
         customMessage={t.games.routine.correctMessage}
+        nextButtonText={isLevel5Passed ? 'Next Activity' : 'Next Level'}
         onPlayNext={() => {
           setShowFeedbackModal(false);
-          onPlayNext();
+          if (isLevel5Passed) {
+            onPlayNext();
+          } else {
+            setLevel(nextLevel);
+            startRound(nextLevel);
+          }
         }}
         onBackHome={() => {
           setShowFeedbackModal(false);
