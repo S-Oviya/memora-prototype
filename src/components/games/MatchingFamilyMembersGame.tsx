@@ -33,13 +33,18 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
 
   // Standard family relationships pool in Assam / North-East
   const ALL_RELATIONS = [
-    { en: 'Daughter', as: 'জীয়াৰী (কন্যা)' },
-    { en: 'Son', as: 'পুত্ৰ' },
-    { en: 'Grandson', as: 'নাতি (মৰমৰ নাতি)' },
-    { en: 'Wife', as: 'পত্নী' },
-    { en: 'Sister', as: 'ভনী / বায়েক' },
-    { en: 'Brother', as: 'ভাই / ককাই' },
-    { en: 'Daughter-in-law', as: 'বোৱাৰী' },
+    { en: 'Daughter', as: 'জীয়াৰী (কন্যা)', gender: 'female' },
+    { en: 'Son', as: 'পুত্ৰ', gender: 'male' },
+    { en: 'Grandson', as: 'নাতি (মৰমৰ নাতি)', gender: 'male' },
+    { en: 'Granddaughter', as: 'নাতিনী', gender: 'female' },
+    { en: 'Wife', as: 'পত্নী', gender: 'female' },
+    { en: 'Sister', as: 'ভনী / বায়েক', gender: 'female' },
+    { en: 'Brother', as: 'ভাই / ককাই', gender: 'male' },
+    { en: 'Daughter-in-law', as: 'বোৱাৰী', gender: 'female' },
+    { en: 'Mother', as: 'আই / মা', gender: 'female' },
+    { en: 'Father', as: 'দেউতা / পিতা', gender: 'male' },
+    { en: 'Son-in-law', as: 'জোঁৱাই', gender: 'male' },
+    { en: 'Uncle', as: 'খুড়া / বৰদেউতা', gender: 'male' },
   ];
 
   const setupRound = (lvl: number) => {
@@ -55,8 +60,8 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
     const target = familyMembers[Math.floor(Math.random() * familyMembers.length)];
     setTargetMember(target);
 
-    // Number of choices by level: L1=2, L2=3, L3=4, L4=4, L5=5
-    const numChoices = lvl === 1 ? 2 : lvl === 2 ? 3 : lvl === 3 ? 4 : lvl === 4 ? 4 : Math.min(ALL_RELATIONS.length, 5);
+    // Number of choices by level: L1=2, L2=3, L3=4, L4=5, L5=5
+    const numChoices = lvl === 1 ? 2 : lvl === 2 ? 3 : lvl === 3 ? 4 : 5;
 
     const correctChoice = {
       en: target.relationship,
@@ -66,9 +71,35 @@ export const MatchingFamilyMembersGame: React.FC<MatchingFamilyMembersGameProps>
     // Filter out correct relationship from pool
     const otherChoices = ALL_RELATIONS.filter(
       (r) => r.en.toLowerCase() !== target.relationship.toLowerCase()
-    ).sort(() => Math.random() - 0.5);
+    );
 
-    const choicesPool = [correctChoice, ...otherChoices.slice(0, numChoices - 1)].sort(
+    let distractors: typeof ALL_RELATIONS;
+    if (lvl === 5) {
+      // Level 5: prioritize same gender / generation relationships as target for subtle distinction
+      const targetRel = target.relationship.toLowerCase();
+      const femaleKeywords = ['daughter', 'wife', 'sister', 'mother', 'granddaughter', 'daughter-in-law', 'aunt', 'niece'];
+      const maleKeywords = ['son', 'husband', 'brother', 'father', 'grandson', 'son-in-law', 'uncle', 'nephew'];
+
+      const isFemale = femaleKeywords.some((k) => targetRel.includes(k));
+      const isMale = maleKeywords.some((k) => targetRel.includes(k));
+
+      const sameGenderPool = isFemale
+        ? otherChoices.filter((r) => r.gender === 'female')
+        : isMale
+        ? otherChoices.filter((r) => r.gender === 'male')
+        : otherChoices;
+
+      const shuffledSame = [...sameGenderPool].sort(() => Math.random() - 0.5);
+      const remainingShuffled = otherChoices
+        .filter((r) => !sameGenderPool.includes(r))
+        .sort(() => Math.random() - 0.5);
+
+      distractors = [...shuffledSame, ...remainingShuffled].slice(0, numChoices - 1);
+    } else {
+      distractors = [...otherChoices].sort(() => Math.random() - 0.5).slice(0, numChoices - 1);
+    }
+
+    const choicesPool = [correctChoice, ...distractors].sort(
       () => Math.random() - 0.5
     );
 

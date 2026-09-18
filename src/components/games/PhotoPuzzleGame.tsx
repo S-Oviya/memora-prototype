@@ -50,15 +50,12 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
   const mistakesCountRef = useRef<number>(0);
 
   // Grid dimensions for Levels 1-5
+  const clampedLevel = Math.max(1, Math.min(5, level));
   const gridConfig =
-    level === 1
+    clampedLevel <= 2
       ? { rows: 2, cols: 2, total: 4 }
-      : level === 2
-      ? { rows: 2, cols: 3, total: 6 }
-      : level === 3
+      : clampedLevel <= 4
       ? { rows: 3, cols: 3, total: 9 }
-      : level === 4
-      ? { rows: 3, cols: 4, total: 12 }
       : { rows: 4, cols: 4, total: 16 };
 
   // Setup puzzle
@@ -70,15 +67,12 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
     setShowOriginal(false);
     setShowFeedbackModal(false);
 
+    const currentLvl = Math.max(1, Math.min(5, targetLevel));
     const config =
-      targetLevel === 1
+      currentLvl <= 2
         ? { total: 4 }
-        : targetLevel === 2
-        ? { total: 6 }
-        : targetLevel === 3
+        : currentLvl <= 4
         ? { total: 9 }
-        : targetLevel === 4
-        ? { total: 12 }
         : { total: 16 };
     const numTiles = config.total;
 
@@ -89,14 +83,51 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
       currentIndex: i,
     }));
 
-    // Shuffle tiles until not in solved order
-    let shuffled: Tile[];
-    let attempts = 0;
-    do {
-      shuffled = [...initialTiles].sort(() => Math.random() - 0.5);
+    let shuffled: Tile[] = [...initialTiles];
+
+    if (currentLvl === 1) {
+      // Level 1: 2x2 puzzle with exactly 1 obvious swap between two tiles (2 in place, 2 swapped)
+      const idx1 = 0;
+      const idx2 = 1;
+      const temp = shuffled[idx1];
+      shuffled[idx1] = shuffled[idx2];
+      shuffled[idx2] = temp;
       shuffled = shuffled.map((tile, idx) => ({ ...tile, currentIndex: idx }));
-      attempts++;
-    } while (shuffled.every((tile, idx) => tile.originalIndex === idx) && attempts < 10);
+    } else if (currentLvl === 2) {
+      // Level 2: 2x2 puzzle with slightly less obvious image arrangement (all 4 tiles swapped/deranged)
+      let attempts = 0;
+      do {
+        shuffled = [...initialTiles].sort(() => Math.random() - 0.5);
+        shuffled = shuffled.map((tile, idx) => ({ ...tile, currentIndex: idx }));
+        attempts++;
+      } while (shuffled.some((tile, idx) => tile.originalIndex === idx) && attempts < 20);
+    } else if (currentLvl === 3) {
+      // Level 3: 3x3 puzzle with moderate arrangement (partial shuffle with anchor tiles)
+      for (let s = 0; s < 3; s++) {
+        const i1 = Math.floor(Math.random() * numTiles);
+        const i2 = Math.floor(Math.random() * numTiles);
+        if (i1 !== i2) {
+          const temp = shuffled[i1];
+          shuffled[i1] = shuffled[i2];
+          shuffled[i2] = temp;
+        }
+      }
+      if (shuffled.every((tile, idx) => tile.originalIndex === idx)) {
+        const temp = shuffled[0];
+        shuffled[0] = shuffled[1];
+        shuffled[1] = temp;
+      }
+      shuffled = shuffled.map((tile, idx) => ({ ...tile, currentIndex: idx }));
+    } else {
+      // Level 4: 3x3 puzzle with more challenging arrangement (full shuffle)
+      // Level 5: 4x4 puzzle (full shuffle)
+      let attempts = 0;
+      do {
+        shuffled = [...initialTiles].sort(() => Math.random() - 0.5);
+        shuffled = shuffled.map((tile, idx) => ({ ...tile, currentIndex: idx }));
+        attempts++;
+      } while (shuffled.every((tile, idx) => tile.originalIndex === idx) && attempts < 15);
+    }
 
     setTiles(shuffled);
 
@@ -106,9 +137,7 @@ export const PhotoPuzzleGame: React.FC<PhotoPuzzleGameProps> = ({
   };
 
   useEffect(() => {
-    if (initialLevel >= 1 && initialLevel <= 5) {
-      setLevel(initialLevel);
-    }
+    setLevel(Math.max(1, Math.min(5, initialLevel)));
   }, [initialLevel]);
 
   useEffect(() => {

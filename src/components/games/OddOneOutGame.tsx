@@ -54,6 +54,28 @@ const PUZZLE_SETS: Record<number, PuzzleSet[]> = {
   2: [
     {
       items: [
+        { id: 'tea', nameEn: 'Assam Tea', nameAs: 'অসম চাহ', icon: '🍵', category: 'hot_drink' },
+        { id: 'coffee', nameEn: 'Hot Coffee', nameAs: 'গৰম কফি', icon: '☕', category: 'hot_drink' },
+        { id: 'icecream', nameEn: 'Ice Cream', nameAs: 'আইচক্ৰীম', icon: '🍦', category: 'cold_dessert' },
+      ],
+      oddItemId: 'icecream',
+      explanationEn: 'Ice cream is a cold dessert, while tea and coffee are hot drinks.',
+      explanationAs: 'আইচক্ৰীম ঠাণ্ডা খাদ্য, কিন্তু চাহ আৰু কফি গৰম পানীয়।',
+    },
+    {
+      items: [
+        { id: 'shirt', nameEn: 'Shirt', nameAs: 'চোলা', icon: '👔', category: 'top' },
+        { id: 'kurta', nameEn: 'Kurta', nameAs: 'কুৰ্তা', icon: '👕', category: 'top' },
+        { id: 'shoe', nameEn: 'Shoe', nameAs: 'জোতা', icon: '👞', category: 'footwear' },
+      ],
+      oddItemId: 'shoe',
+      explanationEn: 'Shoes are footwear for walking, while the others are shirts worn on the upper body.',
+      explanationAs: 'জোতা ভৰিত পিন্ধা হয়, বাকীবোৰ গাৰ চোলা।',
+    },
+  ],
+  3: [
+    {
+      items: [
         { id: 'rose', nameEn: 'Rose Flower', nameAs: 'গোলাপ ফুল', icon: '🌹', category: 'flower' },
         { id: 'lotus', nameEn: 'Lotus Flower', nameAs: 'পদুম ফুল', icon: '🪷', category: 'flower' },
         { id: 'marigold', nameEn: 'Marigold', nameAs: 'গেন্ধেলাই ফুল', icon: '🌼', category: 'flower' },
@@ -73,19 +95,6 @@ const PUZZLE_SETS: Record<number, PuzzleSet[]> = {
       oddItemId: 'plate',
       explanationEn: 'The plate is for eating, while the others are clothes.',
       explanationAs: 'কাঁহীখন ভাত খাবলৈ ব্যৱহাৰ হয়, বাকীবোৰ পিন্ধা কাপোৰ।',
-    },
-  ],
-  3: [
-    {
-      items: [
-        { id: 'tea', nameEn: 'Assam Tea', nameAs: 'অসম চাহ', icon: '🍵', category: 'hot_drink' },
-        { id: 'coffee', nameEn: 'Hot Coffee', nameAs: 'গৰম কফি', icon: '☕', category: 'hot_drink' },
-        { id: 'milk', nameEn: 'Warm Milk', nameAs: 'গৰম গাখীৰ', icon: '🥛', category: 'hot_drink' },
-        { id: 'icecream', nameEn: 'Ice Cream', nameAs: 'আইচক্ৰীম', icon: '🍦', category: 'cold_dessert' },
-      ],
-      oddItemId: 'icecream',
-      explanationEn: 'Ice cream is a cold dessert, while the others are warm morning drinks.',
-      explanationAs: 'আইচক্ৰীম ঠাণ্ডা খাদ্য, কিন্তু চাহ আৰু গাখীৰ পুৱাৰ গৰম পানীয়।',
     },
   ],
   4: [
@@ -114,6 +123,18 @@ const PUZZLE_SETS: Record<number, PuzzleSet[]> = {
       oddItemId: 'spade',
       explanationEn: 'The garden spade is for outdoor soil, while the others belong in a restful bedroom.',
       explanationAs: 'কোৰ ফুলনিত মাটি খান্দিবলৈ লাগে, বাকীবোৰ জিৰণি লোৱা কোঠাৰ সামগ্ৰী।',
+    },
+    {
+      items: [
+        { id: 'guitar', nameEn: 'Guitar', nameAs: 'গীটাৰ', icon: '🎸', category: 'string_instrument' },
+        { id: 'violin', nameEn: 'Violin', nameAs: 'বেহেলা', icon: '🎻', category: 'string_instrument' },
+        { id: 'sitar', nameEn: 'Sitar', nameAs: 'চেতাৰ', icon: '🪕', category: 'string_instrument' },
+        { id: 'ektara', nameEn: 'Dotara / Ektara', nameAs: 'দোতাৰা', icon: '🪕', category: 'string_instrument' },
+        { id: 'flute', nameEn: 'Bamboo Flute', nameAs: 'বাঁহী', icon: '🪈', category: 'wind_instrument' },
+      ],
+      oddItemId: 'flute',
+      explanationEn: 'The bamboo flute is a wind instrument played by breath, while all the others are string instruments.',
+      explanationAs: 'বাঁহী ফুঁ দি বজোৱা বাদ্যযন্ত্ৰ, বাকীবোৰ তাঁৰৰ বাদ্যযন্ত্ৰ।',
     },
   ],
 };

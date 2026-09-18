@@ -6,6 +6,7 @@ import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
 import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
+import { INITIAL_ROUTINES } from '../../services/seedData';
 
 interface RoutineRecallGameProps {
   routines: RoutineItem[];
@@ -21,7 +22,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
   onPlayNext,
 }) => {
   const { t, language } = useLanguage();
-  const [level, setLevel] = useState<number>(initialLevel);
+  const [level, setLevel] = useState<number>(Math.max(1, Math.min(5, initialLevel)));
 
   // Challenge items to be arranged in chronological order
   const [targetItems, setTargetItems] = useState<RoutineItem[]>([]);
@@ -41,30 +42,36 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
     setIsCompleted(false);
     setShowFeedbackModal(false);
 
-    if (routines.length < 2) return;
+    const currentLvl = Math.max(1, Math.min(5, targetLevel));
+    // Number of sequence items: Level 1: 2, Level 2: 3, Level 3: 4, Level 4: 5, Level 5: 6
+    const targetCount = currentLvl === 1 ? 2 : currentLvl === 2 ? 3 : currentLvl === 3 ? 4 : currentLvl === 4 ? 5 : 6;
 
-    const sorted = [...routines].sort((a, b) => a.order - b.order);
+    // Build comprehensive pool of at least 6 routines
+    const allRoutines = [...routines];
+    for (const initR of INITIAL_ROUTINES) {
+      if (!allRoutines.some((r) => r.id === initR.id) && allRoutines.length < 6) {
+        allRoutines.push(initR);
+      }
+    }
+
+    if (allRoutines.length < 2) return;
+
+    const sorted = [...allRoutines].sort((a, b) => a.order - b.order);
 
     let selected: RoutineItem[] = [];
-    if (targetLevel === 1) {
+    if (currentLvl === 1) {
       // Pick 2 items with clear time difference
       selected = [sorted[0], sorted[Math.min(sorted.length - 1, 3)]];
-    } else if (targetLevel === 2) {
+    } else if (currentLvl === 2) {
       // Pick 3 items across the day
       selected = [
         sorted[0],
         sorted[Math.floor(sorted.length / 2)],
         sorted[sorted.length - 1],
       ];
-    } else if (targetLevel === 3) {
-      // Pick 4 sequential routine items
-      selected = sorted.slice(0, Math.min(4, sorted.length));
-    } else if (targetLevel === 4) {
-      // Pick 5 sequential routine items
-      selected = sorted.slice(0, Math.min(5, sorted.length));
     } else {
-      // Level 5: full day sequence (up to 6 items)
-      selected = sorted.slice(0, Math.min(6, sorted.length));
+      // Level 3: 4 items, Level 4: 5 items, Level 5: 6 items
+      selected = sorted.slice(0, targetCount);
     }
 
     setTargetItems(selected);
@@ -78,7 +85,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
   };
 
   useEffect(() => {
-    setLevel(initialLevel);
+    setLevel(Math.max(1, Math.min(5, initialLevel)));
   }, [initialLevel]);
 
   useEffect(() => {

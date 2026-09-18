@@ -79,6 +79,64 @@ const ALL_SHAPES: ShapeItem[] = [
   },
 ];
 
+// Level 5 uses 6 visually similar geometric / polygonal shapes to test fine visual discrimination
+const LEVEL_5_SHAPES: ShapeItem[] = [
+  {
+    id: 'square',
+    nameEn: 'Square',
+    nameAs: 'বৰ্গ (চাৰিকোণীয়া)',
+    symbol: '🟦',
+    color: '#10B981',
+    borderColor: '#047857',
+    svgPath: 'M 15 15 L 85 15 L 85 85 L 15 85 Z',
+  },
+  {
+    id: 'rectangle',
+    nameEn: 'Rectangle',
+    nameAs: 'আয়তক্ষেত্ৰ',
+    symbol: '▬',
+    color: '#3B82F6',
+    borderColor: '#1D4ED8',
+    svgPath: 'M 10 25 L 90 25 L 90 75 L 10 75 Z',
+  },
+  {
+    id: 'diamond',
+    nameEn: 'Diamond',
+    nameAs: 'হীৰা (ৰম্বাচ)',
+    symbol: '🔶',
+    color: '#EC4899',
+    borderColor: '#BE185D',
+    svgPath: 'M 50 10 L 90 50 L 50 90 L 10 50 Z',
+  },
+  {
+    id: 'trapezoid',
+    nameEn: 'Trapezoid',
+    nameAs: 'ট্ৰেপিজিয়াম',
+    symbol: '⏢',
+    color: '#F59E0B',
+    borderColor: '#B45309',
+    svgPath: 'M 25 20 L 75 20 L 90 80 L 10 80 Z',
+  },
+  {
+    id: 'pentagon',
+    nameEn: 'Pentagon',
+    nameAs: 'পঞ্চভুজ',
+    symbol: '⬟',
+    color: '#8B5CF6',
+    borderColor: '#6D28D9',
+    svgPath: 'M 50 12 L 90 42 L 75 88 L 25 88 L 10 42 Z',
+  },
+  {
+    id: 'hexagon',
+    nameEn: 'Hexagon',
+    nameAs: 'ষড়ভুজ (ছয়কোণীয়া)',
+    symbol: '🔷',
+    color: '#06B6D4',
+    borderColor: '#0E7490',
+    svgPath: 'M 25 15 L 75 15 L 95 50 L 75 85 L 25 85 L 5 50 Z',
+  },
+];
+
 export const ShapeFitGame: React.FC<ShapeFitGameProps> = ({
   initialLevel = 1,
   onBack,
@@ -103,8 +161,14 @@ export const ShapeFitGame: React.FC<ShapeFitGameProps> = ({
     setShowFeedbackModal(false);
 
     // Number of available choices based on level
-    const count = lvl === 1 ? 3 : lvl === 2 ? 4 : lvl === 3 ? 4 : lvl === 4 ? 5 : 6;
-    const pool = ALL_SHAPES.slice(0, Math.max(count, 3));
+    let pool: ShapeItem[];
+    if (lvl >= 5) {
+      pool = LEVEL_5_SHAPES;
+    } else {
+      const count = lvl === 1 ? 3 : lvl === 2 ? 4 : lvl === 3 ? 5 : 6;
+      pool = ALL_SHAPES.slice(0, count);
+    }
+
     const target = pool[Math.floor(Math.random() * pool.length)];
     setTargetShape(target);
 

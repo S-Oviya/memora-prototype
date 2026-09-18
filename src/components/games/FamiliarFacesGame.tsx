@@ -7,12 +7,47 @@ import { db } from '../../services/db';
 import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
 
+import { createAvatarSvg } from '../../services/seedData';
+
 interface FamiliarFacesGameProps {
   familyMembers: FamilyMember[];
   initialLevel?: number;
   onBack: () => void;
   onPlayNext: () => void;
 }
+
+const FALLBACK_EXTENDED_MEMBERS: FamilyMember[] = [
+  {
+    id: 'fam-kavita-ext',
+    patientId: 'patient-ramesh-1',
+    name: 'Kavita Baruah',
+    relationship: 'Sister',
+    relationshipAs: 'ভনী',
+    photoUrl: createAvatarSvg('Kavita (Sister)', 'Sister', '#EC4899', '#374151', '#9D174D'),
+    voiceTranscriptEn: 'Hello Ramesh, this is Kavita!',
+    voiceTranscriptAs: 'নমস্কাৰ ৰমেশ, মই কবিতা!',
+  },
+  {
+    id: 'fam-biren-ext',
+    patientId: 'patient-ramesh-1',
+    name: 'Biren Baruah',
+    relationship: 'Brother',
+    relationshipAs: 'ভাই',
+    photoUrl: createAvatarSvg('Biren (Brother)', 'Brother', '#3B82F6', '#1F2937', '#1E40AF'),
+    voiceTranscriptEn: 'Ramesh, brother, good to see you!',
+    voiceTranscriptAs: 'ৰমেশ ভাই, সকলো ভালে আছে নে!',
+  },
+  {
+    id: 'fam-anita-ext',
+    patientId: 'patient-ramesh-1',
+    name: 'Anita Baruah',
+    relationship: 'Daughter-in-law',
+    relationshipAs: 'বোৱাৰী',
+    photoUrl: createAvatarSvg('Anita (Daughter-in-law)', 'Daughter-in-law', '#F59E0B', '#1E293B', '#B45309'),
+    voiceTranscriptEn: 'Namaskar Deuta, tea is ready.',
+    voiceTranscriptAs: 'নমস্কাৰ দেউতা, চাহ তৈয়াৰ হৈছে।',
+  },
+];
 
 export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
   familyMembers,
@@ -21,7 +56,7 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
   onPlayNext,
 }) => {
   const { t, language, format } = useLanguage();
-  const [level, setLevel] = useState<number>(initialLevel);
+  const [level, setLevel] = useState<number>(Math.max(1, Math.min(5, initialLevel)));
   const [targetMember, setTargetMember] = useState<FamilyMember | null>(null);
   const [choices, setChoices] = useState<FamilyMember[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -33,7 +68,8 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
   const startTimeRef = useRef<number>(Date.now());
   const mistakesCountRef = useRef<number>(0);
 
-  const numChoices = level === 1 ? 2 : level === 2 ? 3 : level === 3 ? 4 : Math.min(familyMembers.length, level === 4 ? 4 : 5);
+  const clampedLevel = Math.max(1, Math.min(5, level));
+  const numChoices = clampedLevel === 1 ? 2 : clampedLevel === 2 ? 3 : clampedLevel === 3 ? 4 : 5;
 
   const startRound = (targetLevel: number) => {
     startTimeRef.current = Date.now();
@@ -43,26 +79,56 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
     setShowFeedbackModal(false);
     setVoicePlaying(false);
 
-    if (familyMembers.length === 0) return;
+    // Build comprehensive pool of at least 5 members
+    const allMembers = [...familyMembers];
+    for (const ext of FALLBACK_EXTENDED_MEMBERS) {
+      if (!allMembers.some((m) => m.id === ext.id) && allMembers.length < 6) {
+        allMembers.push(ext);
+      }
+    }
+
+    if (allMembers.length === 0) return;
 
     // Pick target
-    const target = familyMembers[Math.floor(Math.random() * familyMembers.length)];
+    const targetPool = familyMembers.length > 0 ? familyMembers : allMembers;
+    const target = targetPool[Math.floor(Math.random() * targetPool.length)];
     setTargetMember(target);
 
-    // Pick distractors
-    const others = familyMembers.filter((m) => m.id !== target.id);
-    const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
+    // Filter out target
+    const others = allMembers.filter((m) => m.id !== target.id);
+    const currentLvl = Math.max(1, Math.min(5, targetLevel));
+    const neededChoices = currentLvl === 1 ? 2 : currentLvl === 2 ? 3 : currentLvl === 3 ? 4 : 5;
 
-    const neededChoices = targetLevel === 1 ? 2 : targetLevel === 2 ? 3 : targetLevel === 3 ? 4 : Math.min(familyMembers.length, targetLevel === 4 ? 4 : 5);
-    const currentChoices = [target, ...shuffledOthers.slice(0, neededChoices - 1)].sort(
-      () => Math.random() - 0.5
-    );
+    let selectedDistractors: FamilyMember[] = [];
 
+    if (currentLvl === 5) {
+      // Level 5: 5 choices with more similar/difficult distractors (e.g. matching gender/generation)
+      const isFemale = (m: FamilyMember) =>
+        /daughter|wife|sister|mother|নাতিনী|জীয়াৰী|পত্নী|ভনী|বোৱাৰী/i.test(
+          `${m.relationship} ${m.relationshipAs || ''}`
+        );
+      const targetIsFemale = isFemale(target);
+
+      const similarOthers = others.filter((m) => isFemale(m) === targetIsFemale);
+      const differentOthers = others.filter((m) => isFemale(m) !== targetIsFemale);
+
+      const shuffledSimilar = [...similarOthers].sort(() => Math.random() - 0.5);
+      const shuffledDifferent = [...differentOthers].sort(() => Math.random() - 0.5);
+
+      const combined = [...shuffledSimilar, ...shuffledDifferent];
+      selectedDistractors = combined.slice(0, neededChoices - 1);
+    } else {
+      // Levels 1-4: random distractors
+      const shuffledOthers = [...others].sort(() => Math.random() - 0.5);
+      selectedDistractors = shuffledOthers.slice(0, neededChoices - 1);
+    }
+
+    const currentChoices = [target, ...selectedDistractors].sort(() => Math.random() - 0.5);
     setChoices(currentChoices);
 
     // Auto-voice prompt: Level 4/5 uses short relation prompt for higher cognitive stimulation
     const promptText =
-      targetLevel >= 4
+      currentLvl >= 4
         ? format(t.games.faces.questionFindShort, {
             relation: target.relationshipAs || target.relationship,
           })
@@ -80,7 +146,7 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
   };
 
   useEffect(() => {
-    setLevel(initialLevel);
+    setLevel(Math.max(1, Math.min(5, initialLevel)));
   }, [initialLevel]);
 
   useEffect(() => {
@@ -204,7 +270,7 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
             ? 'grid-cols-1 sm:grid-cols-2'
             : numChoices === 3
             ? 'grid-cols-1 sm:grid-cols-3'
-            : 'grid-cols-2'
+            : 'grid-cols-2 sm:grid-cols-3'
         }`}
       >
         {choices.map((member) => {
