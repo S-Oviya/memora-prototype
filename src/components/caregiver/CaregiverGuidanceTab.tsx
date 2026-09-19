@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Heart, ChevronDown, ChevronUp, ShieldAlert, Sparkles, MessageCircle, CalendarCheck, ShieldCheck, Sun, Lightbulb, RefreshCw } from 'lucide-react';
-import { useLanguage } from '../../locales/LanguageContext';
-import { CAREGIVER_GUIDANCE_TIPS } from '../../services/seedData';
+import { getTranslations } from '../../locales/LanguageContext';
+import {
+  CAREGIVER_GUIDANCE_TIPS,
+  getGuidanceTipCategory,
+  getGuidanceTipTitle,
+  getGuidanceTipSummary,
+  getGuidanceTipBullets,
+} from '../../services/seedData';
 import { api } from '../../services/api';
-import { Patient, GameAttempt, AICaregiverInsightResult } from '../../types';
+import { Patient, GameAttempt, AICaregiverInsightResult, Language } from '../../types';
 import { OfflineInsightsService } from '../../services/offlineInsightsService';
 import { db } from '../../services/db';
 
@@ -12,33 +18,79 @@ interface CaregiverGuidanceTabProps {
   attempts?: GameAttempt[];
 }
 
+const STAT_LABELS: Record<Language, { strongArea: string; focusArea: string; targetLevel: string }> = {
+  en: { strongArea: 'Strong Area', focusArea: 'Focus Area', targetLevel: 'Target Level' },
+  as: { strongArea: 'দক্ষতা', focusArea: 'অনুশীলন', targetLevel: 'নিৰ্দেশিত স্তৰ' },
+  bn: { strongArea: 'দক্ষতা', focusArea: 'অনুশীলনের ক্ষেত্র', targetLevel: 'লক্ষ্য মাত্রা' },
+  ne: { strongArea: 'सबल पक्ष', focusArea: 'अभ्यास क्षेत्र', targetLevel: 'लक्षित स्तर' },
+  lus: { strongArea: 'थिअम जौंग', focusArea: 'ज़िर गै', targetLevel: 'तूम राम कैलौन' },
+  kha: { strongArea: 'কা বোর বা খ্লাইন', focusArea: 'কা জাকা প্যনলেইত জিংমুত', targetLevel: 'কা ক্যরদান বা থমু' },
+  ny: { strongArea: 'अल्बो लोंगो', focusArea: 'अचिंग लोंगो', targetLevel: 'तेन्नान लोंगो' },
+  trp: { strongArea: 'কাহাম জায়া', focusArea: 'সামুং নাইমানি', targetLevel: 'লক্ষ্য মাত্রা' },
+};
+
+const PERSONALIZED_INSIGHT_TITLES: Record<Language, string> = {
+  en: 'Personalized Activity Guidance',
+  as: 'ব্যক্তিগত কাৰ্যসূচী আৰু পৰামৰ্শ',
+  bn: 'ব্যক্তিগত কার্যকলাপ ও অন্তর্দৃষ্টি',
+  ne: 'व्यक्तिगत गतिविधि तथा परामर्श',
+  lus: 'मीलैम ताना रौतना लेह ज़ीर्तीर्ना',
+  kha: 'কা জিংব্থাহ বা লা প্যনখ্রেহ বা ক্যরপাং',
+  ny: 'अकम गेन्नम अगन',
+  trp: 'বোরোকনি বাগৈ বিশেষ পরামর্শ',
+};
+
 export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   patient,
   attempts,
 }) => {
-  const { t, language } = useLanguage();
   const [expandedId, setExpandedId] = useState<string | null>('tip-1');
+  const [patientData, setPatientData] = useState<Patient>(() => {
+    const fromDb = db.getPatient();
+    return fromDb || (patient as Patient);
+  });
 
-  const resolvedPatient = patient || db.getPatient();
-  const resolvedAttempts = attempts || db.getGameAttempts();
-
-  const [aiInsight, setAiInsight] = useState<AICaregiverInsightResult>(() =>
-    OfflineInsightsService.generateOfflineInsights(
-      resolvedPatient.name,
-      resolvedAttempts,
-      language
-    )
-  );
-
+  // Listen to patient update events from DB or other tabs
   useEffect(() => {
-    // Generate caregiver insights 100% offline from local GameAttempt data
-    const offlineResult = OfflineInsightsService.generateOfflineInsights(
-      resolvedPatient.name,
+    const handlePatientUpdate = () => {
+      setPatientData(db.getPatient());
+    };
+    window.addEventListener('memora_patient_updated', handlePatientUpdate);
+    window.addEventListener('storage', handlePatientUpdate);
+    return () => {
+      window.removeEventListener('memora_patient_updated', handlePatientUpdate);
+      window.removeEventListener('storage', handlePatientUpdate);
+    };
+  }, []);
+
+  // Sync if parent passes updated patient prop
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    }
+  }, [patient]);
+
+  // Read latest directly from DB as ultimate source of truth, then state, then prop
+  const latestDbPatient = db.getPatient();
+  const resolvedPatient = latestDbPatient || patientData || patient;
+  // Patient preferredLanguage has absolute priority over caregiver UI language
+  const preferredLanguage: Language = (
+    latestDbPatient?.preferredLanguage ||
+    patientData?.preferredLanguage ||
+    patient?.preferredLanguage ||
+    'as'
+  ) as Language;
+  const resolvedAttempts = attempts || db.getGameAttempts();
+  const currentT = getTranslations(preferredLanguage);
+
+  // Synchronously compute offline insights strictly using the patient's preferred language
+  const aiInsight: AICaregiverInsightResult = useMemo(() => {
+    return OfflineInsightsService.generateOfflineInsights(
+      resolvedPatient?.name || 'the senior',
       resolvedAttempts,
-      language
+      preferredLanguage
     );
-    setAiInsight(offlineResult);
-  }, [language, resolvedPatient.name, resolvedAttempts]);
+  }, [preferredLanguage, resolvedPatient?.name, resolvedAttempts]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -64,18 +116,18 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
         <div className="flex items-center gap-3 text-sage-800 mb-2">
           <Heart className="w-6 h-6 fill-sage-200 text-sage-700" />
           <h2 className="text-2xl font-black text-gray-900">
-            {t.caregiver.guidance.title}
+            {currentT.caregiver.guidance.title}
           </h2>
         </div>
         <p className="text-sm text-gray-600 leading-relaxed">
-          {t.caregiver.guidance.subtitle}
+          {currentT.caregiver.guidance.subtitle}
         </p>
 
         {/* Non-Medical Disclaimer */}
         <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-900 leading-relaxed">
-            {t.caregiver.guidance.disclaimer}
+            {currentT.caregiver.guidance.disclaimer}
           </p>
         </div>
       </div>
@@ -90,15 +142,15 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
               </div>
               <div>
                 <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide">
-                  {language === 'as' ? 'অন-ডিভাইচ এআই নিৰ্দেশনা' : 'On-Device Cognitive AI Guidance'}
+                  {currentT.caregiver.guidance.aiInsightTitle}
                 </span>
                 <h3 className="text-lg font-black text-gray-900">
-                  {language === 'as' ? 'ব্যক্তিগত পৰামৰ্শ' : 'Patient-Centered Activity Guidance'}
+                  {PERSONALIZED_INSIGHT_TITLES[preferredLanguage] || PERSONALIZED_INSIGHT_TITLES.en}
                 </h3>
               </div>
             </div>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-              {language === 'as' ? 'অফলাইন এআই' : 'On-Device ML'}
+              {currentT.caregiver.guidance.ruleBasedBadge}
             </span>
           </div>
 
@@ -109,7 +161,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
             <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100">
               <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                {language === 'as' ? 'দক্ষতা' : 'Strong Area'}
+                {STAT_LABELS[preferredLanguage]?.strongArea || STAT_LABELS.en.strongArea}
               </span>
               <span className="text-xs font-extrabold text-indigo-950">
                 {aiInsight.strongestArea}
@@ -117,7 +169,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
             </div>
             <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100">
               <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                {language === 'as' ? 'অনুশীলন' : 'Focus Area'}
+                {STAT_LABELS[preferredLanguage]?.focusArea || STAT_LABELS.en.focusArea}
               </span>
               <span className="text-xs font-extrabold text-amber-900">
                 {aiInsight.practiceArea}
@@ -125,10 +177,10 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
             </div>
             <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100 col-span-2 sm:col-span-1">
               <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                {language === 'as' ? 'নিৰ্দেশিত স্তৰ' : 'Target Level'}
+                {STAT_LABELS[preferredLanguage]?.targetLevel || STAT_LABELS.en.targetLevel}
               </span>
-              <span className="text-xs font-extrabold text-emerald-800">
-                Level {aiInsight.recommendedLevel} ({Math.round(aiInsight.confidence * 100)}%)
+              <span className="text-xs font-extrabold text-sage-800">
+                {currentT.patient.level} {aiInsight.recommendedLevel} ({Math.round(aiInsight.confidence * 100)}%)
               </span>
             </div>
           </div>
@@ -141,7 +193,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
             <div className="space-y-2 mb-3">
               <h4 className="text-xs font-bold uppercase text-indigo-900 flex items-center gap-1.5">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                <span>{language === 'as' ? 'পৰামৰ্শসমূহ' : 'Supportive Suggestions'}:</span>
+                <span>{currentT.caregiver.guidance.suggestedForCaregiver}</span>
               </h4>
               <ul className="space-y-1.5">
                 {aiInsight.caregiverSuggestions.map((sugg, idx) => (
@@ -165,10 +217,10 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
       <div className="space-y-4">
         {CAREGIVER_GUIDANCE_TIPS.map((tip) => {
           const isExpanded = expandedId === tip.id;
-          const title = language === 'as' ? tip.titleAs : tip.titleEn;
-          const category = language === 'as' ? tip.categoryAs : tip.categoryEn;
-          const summary = language === 'as' ? tip.summaryAs : tip.summaryEn;
-          const bullets = language === 'as' ? tip.bulletPointsAs : tip.bulletPointsEn;
+          const title = getGuidanceTipTitle(tip, preferredLanguage);
+          const category = getGuidanceTipCategory(tip, preferredLanguage);
+          const summary = getGuidanceTipSummary(tip, preferredLanguage);
+          const bullets = getGuidanceTipBullets(tip, preferredLanguage);
 
           return (
             <div

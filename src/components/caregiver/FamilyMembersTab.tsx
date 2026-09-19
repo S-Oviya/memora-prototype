@@ -1,26 +1,37 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Mic, MicOff, Upload, Trash2, Volume2, Play, Check, AlertCircle, Sparkles, UserPlus } from 'lucide-react';
+import { Plus, Mic, MicOff, Upload, Trash2, Volume2, Play, Check, AlertCircle, Sparkles, UserPlus, Edit2 } from 'lucide-react';
 import { useLanguage } from '../../locales/LanguageContext';
-import { FamilyMember } from '../../types';
+import { FamilyMember, Language, Patient } from '../../types';
 import { db } from '../../services/db';
 import { audioService } from '../../services/audioService';
 import { VoiceRecorder } from '../../services/voiceRecorder';
-import { createAvatarSvg } from '../../services/seedData';
+import { createAvatarSvg, getFamilyMemberTranscript } from '../../services/seedData';
 import { AccessibleButton } from '../common/AccessibleButton';
 
 interface FamilyMembersTabProps {
   familyMembers: FamilyMember[];
   patientId: string;
+  patient?: Patient;
   onRefresh: () => void;
 }
 
 export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
   familyMembers,
   patientId,
+  patient,
   onRefresh,
 }) => {
   const { t, language } = useLanguage();
+  const dbPatient = db.getPatient();
+  const resolvedPatient = patient || dbPatient;
+  const preferredLanguage: Language = (
+    patient?.preferredLanguage ||
+    dbPatient?.preferredLanguage ||
+    resolvedPatient?.preferredLanguage ||
+    'as'
+  ) as Language;
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [activePlayingId, setActivePlayingId] = useState<string | null>(null);
 
   // Form State
@@ -31,6 +42,12 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
   const [voiceAudioUrl, setVoiceAudioUrl] = useState('');
   const [voiceTranscriptEn, setVoiceTranscriptEn] = useState('');
   const [voiceTranscriptAs, setVoiceTranscriptAs] = useState('');
+  const [voiceTranscriptBn, setVoiceTranscriptBn] = useState('');
+  const [voiceTranscriptNe, setVoiceTranscriptNe] = useState('');
+  const [voiceTranscriptLus, setVoiceTranscriptLus] = useState('');
+  const [voiceTranscriptKha, setVoiceTranscriptKha] = useState('');
+  const [voiceTranscriptNy, setVoiceTranscriptNy] = useState('');
+  const [voiceTranscriptTrp, setVoiceTranscriptTrp] = useState('');
 
   // Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -40,6 +57,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
   const timerIntervalRef = useRef<number | null>(null);
 
   const resetForm = () => {
+    setEditingMember(null);
     setName('');
     setRelationship('');
     setRelationshipAs('');
@@ -47,11 +65,38 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
     setVoiceAudioUrl('');
     setVoiceTranscriptEn('');
     setVoiceTranscriptAs('');
+    setVoiceTranscriptBn('');
+    setVoiceTranscriptNe('');
+    setVoiceTranscriptLus('');
+    setVoiceTranscriptKha('');
+    setVoiceTranscriptNy('');
+    setVoiceTranscriptTrp('');
     setIsRecording(false);
     setRecordingSeconds(0);
     if (voiceRecorderRef.current) {
       voiceRecorderRef.current.cancelRecording();
     }
+  };
+
+  const handleEditMember = (member: FamilyMember) => {
+    setEditingMember(member);
+    setName(member.name);
+    setRelationship(member.relationship);
+    setRelationshipAs(member.relationshipAs || '');
+    setPhotoUrl(member.photoUrl || '');
+    setVoiceAudioUrl(member.voiceAudioUrl || '');
+
+    // Load existing greetings for all 8 languages without deleting or overwriting
+    setVoiceTranscriptEn(member.voiceTranscriptEn || member.voiceTranscripts?.en || getFamilyMemberTranscript(member, 'en'));
+    setVoiceTranscriptAs(member.voiceTranscriptAs || member.voiceTranscripts?.as || getFamilyMemberTranscript(member, 'as'));
+    setVoiceTranscriptBn(member.voiceTranscriptBn || member.voiceTranscripts?.bn || getFamilyMemberTranscript(member, 'bn'));
+    setVoiceTranscriptNe(member.voiceTranscriptNe || member.voiceTranscripts?.ne || getFamilyMemberTranscript(member, 'ne'));
+    setVoiceTranscriptLus(member.voiceTranscriptLus || member.voiceTranscripts?.lus || getFamilyMemberTranscript(member, 'lus'));
+    setVoiceTranscriptKha(member.voiceTranscriptKha || member.voiceTranscripts?.kha || getFamilyMemberTranscript(member, 'kha'));
+    setVoiceTranscriptNy(member.voiceTranscriptNy || member.voiceTranscripts?.ny || getFamilyMemberTranscript(member, 'ny'));
+    setVoiceTranscriptTrp(member.voiceTranscriptTrp || member.voiceTranscripts?.trp || getFamilyMemberTranscript(member, 'trp'));
+
+    setShowAddModal(true);
   };
 
   const handleStartRecording = async () => {
@@ -116,6 +161,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
     // Fallback photo if none uploaded
     const finalPhotoUrl =
       photoUrl ||
+      editingMember?.photoUrl ||
       createAvatarSvg(
         name,
         relationship,
@@ -124,19 +170,43 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
         '#2563EB'
       );
 
-    const newMember: FamilyMember = {
-      id: 'fam-' + Date.now(),
+    const voiceTranscripts: Partial<Record<Language, string>> = {
+      ...(editingMember?.voiceTranscripts || {}),
+    };
+    if (voiceTranscriptEn) voiceTranscripts.en = voiceTranscriptEn;
+    if (voiceTranscriptAs) voiceTranscripts.as = voiceTranscriptAs;
+    if (voiceTranscriptBn) voiceTranscripts.bn = voiceTranscriptBn;
+    if (voiceTranscriptNe) voiceTranscripts.ne = voiceTranscriptNe;
+    if (voiceTranscriptLus) voiceTranscripts.lus = voiceTranscriptLus;
+    if (voiceTranscriptKha) voiceTranscripts.kha = voiceTranscriptKha;
+    if (voiceTranscriptNy) voiceTranscripts.ny = voiceTranscriptNy;
+    if (voiceTranscriptTrp) voiceTranscripts.trp = voiceTranscriptTrp;
+
+    const savedMember: FamilyMember = {
+      ...(editingMember || {}),
+      id: editingMember ? editingMember.id : 'fam-' + Date.now(),
       patientId,
       name,
       relationship,
       relationshipAs: relationshipAs || relationship,
       photoUrl: finalPhotoUrl,
-      voiceAudioUrl,
-      voiceTranscriptEn: voiceTranscriptEn || `Hello from ${name}`,
-      voiceTranscriptAs: voiceTranscriptAs || `মই ${name}`,
+      voiceAudioUrl: voiceAudioUrl || editingMember?.voiceAudioUrl,
+      voiceTranscriptEn: voiceTranscriptEn || editingMember?.voiceTranscriptEn || `Hello from ${name}`,
+      voiceTranscriptAs: voiceTranscriptAs || editingMember?.voiceTranscriptAs || `মই ${name}`,
+      voiceTranscriptBn: voiceTranscriptBn || editingMember?.voiceTranscriptBn || `আমি ${name}`,
+      voiceTranscriptNe: voiceTranscriptNe || editingMember?.voiceTranscriptNe || `म ${name}`,
+      voiceTranscriptLus: voiceTranscriptLus || editingMember?.voiceTranscriptLus || `चिबाई, ${name} क नी ए!`,
+      voiceTranscriptKha: voiceTranscriptKha || editingMember?.voiceTranscriptKha || `খুবলৈ, ঙা ${name}!`,
+      voiceTranscriptNy: voiceTranscriptNy || editingMember?.voiceTranscriptNy || `अल्बो, ङो ${name}!`,
+      voiceTranscriptTrp: voiceTranscriptTrp || editingMember?.voiceTranscriptTrp || `খুলুমখা, আং ${name}!`,
+      voiceTranscripts,
     };
 
-    db.addFamilyMember(newMember);
+    if (editingMember) {
+      db.updateFamilyMember(savedMember);
+    } else {
+      db.addFamilyMember(savedMember);
+    }
     onRefresh();
     setShowAddModal(false);
     resetForm();
@@ -161,10 +231,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
       if (member.voiceAudioUrl) {
         await audioService.playVoice(member.voiceAudioUrl);
       } else {
-        const text =
-          language === 'as'
-            ? member.voiceTranscriptAs || `মই ${member.name}`
-            : member.voiceTranscriptEn || `Hello, this is ${member.name}`;
+        const text = getFamilyMemberTranscript(member, language as Language);
         audioService.speakText(text, language);
       }
     } catch {
@@ -215,20 +282,31 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
                 className="bg-white rounded-3xl p-5 border-2 border-sage-100 hover:border-sage-300 shadow-sm flex flex-col justify-between transition-all"
               >
                 <div>
-                  {/* Photo & Delete */}
+                  {/* Photo & Actions (Edit & Delete) */}
                   <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-4 bg-warm-100 border border-warm-200">
                     <img
                       src={member.photoUrl}
                       alt={member.name}
                       className="w-full h-full object-cover"
                     />
-                    <button
-                      onClick={() => handleDeleteMember(member.id)}
-                      className="absolute top-2 right-2 p-2 rounded-xl bg-white/90 hover:bg-rose-50 text-rose-600 border border-rose-200 shadow-sm transition"
-                      title={t.caregiver.family.deleteMember}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleEditMember(member)}
+                        className="p-2 rounded-xl bg-white/90 hover:bg-sage-50 text-sage-700 border border-sage-200 shadow-sm transition"
+                        title={t.common.edit || 'Edit'}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMember(member.id)}
+                        className="p-2 rounded-xl bg-white/90 hover:bg-rose-50 text-rose-600 border border-rose-200 shadow-sm transition"
+                        title={t.caregiver.family.deleteMember}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Name and Relationship */}
@@ -246,7 +324,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
 
                   {/* Voice note preview transcript */}
                   <p className="text-xs text-gray-500 mt-3 italic line-clamp-2">
-                    "{language === 'as' ? member.voiceTranscriptAs || member.voiceTranscriptEn : member.voiceTranscriptEn || member.voiceTranscriptAs}"
+                    "{getFamilyMemberTranscript(member, language as Language)}"
                   </p>
                 </div>
 
@@ -274,12 +352,12 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
         </div>
       )}
 
-      {/* Add Family Member Modal */}
+      {/* Add / Edit Family Member Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border-4 border-sage-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-4 border-sage-200">
             <h3 className="text-2xl font-black text-gray-900 mb-1">
-              {t.caregiver.family.addMember}
+              {editingMember ? (t.common.edit ? `${t.common.edit}: ${editingMember.name}` : `Edit: ${editingMember.name}`) : t.caregiver.family.addMember}
             </h3>
             <p className="text-sm text-gray-500 mb-6">
               {t.caregiver.family.subtitle}
@@ -408,31 +486,121 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
                 )}
               </div>
 
-              {/* Voice Transcript (English and Assamese) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Spoken Greeting (English)
-                  </label>
-                  <input
-                    type="text"
-                    value={voiceTranscriptEn}
-                    onChange={(e) => setVoiceTranscriptEn(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200"
-                    placeholder="e.g. Hi Dad, it is Sunita!"
-                  />
+              {/* Spoken Greetings (All 8 Supported Languages) */}
+              <div className="space-y-3">
+                <div className="border-t border-gray-100 pt-3">
+                  <h4 className="text-sm font-bold text-gray-800 mb-0.5">
+                    Spoken Greetings (All 8 Supported Languages)
+                  </h4>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Enter greetings for all supported languages. Familiar Faces and Familiar Voices will play the greeting matching the patient's Preferred Language.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Spoken Greeting (Assamese)
-                  </label>
-                  <input
-                    type="text"
-                    value={voiceTranscriptAs}
-                    onChange={(e) => setVoiceTranscriptAs(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200"
-                    placeholder="e.g. দেউতা, মই সুনীতা!"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (English)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptEn}
+                      onChange={(e) => setVoiceTranscriptEn(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. Hi Dad, it is Sunita!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Assamese)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptAs}
+                      onChange={(e) => setVoiceTranscriptAs(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. দেউতা, মই সুনীতা!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Bengali)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptBn}
+                      onChange={(e) => setVoiceTranscriptBn(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. বাবা, আমি সুনীতা!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Nepali)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptNe}
+                      onChange={(e) => setVoiceTranscriptNe(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. बुबा, म सुनिता!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Mizo)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptLus}
+                      onChange={(e) => setVoiceTranscriptLus(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. Ka pa, Sunita ka ni e!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Khasi)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptKha}
+                      onChange={(e) => setVoiceTranscriptKha(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. Pa, nga dei ka Sunita!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Nyishi)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptNy}
+                      onChange={(e) => setVoiceTranscriptNy(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. Abo, ngo Sunita!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Kokborok)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptTrp}
+                      onChange={(e) => setVoiceTranscriptTrp(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. Pha, ang Sunita!"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -452,7 +620,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
                   type="submit"
                   className="px-6 py-2.5 rounded-xl font-bold bg-sage-600 text-white hover:bg-sage-700 text-sm shadow-md"
                 >
-                  {t.caregiver.family.saveMember}
+                  {editingMember ? (t.common.save || 'Save Changes') : t.caregiver.family.saveMember}
                 </button>
               </div>
             </form>

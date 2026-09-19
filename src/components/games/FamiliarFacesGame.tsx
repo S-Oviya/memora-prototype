@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Volume2, CheckCircle2, RotateCcw, Heart } from 'lucide-react';
-import { useLanguage } from '../../locales/LanguageContext';
-import { FamilyMember } from '../../types';
+import { useLanguage, getTranslations } from '../../locales/LanguageContext';
+import { FamilyMember, Language, Patient } from '../../types';
 import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
 import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
 
-import { createAvatarSvg } from '../../services/seedData';
+import { createAvatarSvg, getFamilyMemberRelation, getFamilyMemberTranscript } from '../../services/seedData';
 
 interface FamiliarFacesGameProps {
+  patient?: Patient;
   familyMembers: FamilyMember[];
   initialLevel?: number;
   onBack: () => void;
@@ -50,12 +51,17 @@ const FALLBACK_EXTENDED_MEMBERS: FamilyMember[] = [
 ];
 
 export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
+  patient,
   familyMembers,
   initialLevel = 1,
   onBack,
   onPlayNext,
 }) => {
-  const { t, language, format } = useLanguage();
+  const { format } = useLanguage();
+  const resolvedPatient = patient || db.getPatient();
+  // Strictly use the patient's saved preferredLanguage from Patient Profile; never use caretaker UI language
+  const preferredLanguage: Language = resolvedPatient.preferredLanguage;
+  const currentT = getTranslations(preferredLanguage);
   const [level, setLevel] = useState<number>(Math.max(1, Math.min(5, initialLevel)));
   const [nextLevel, setNextLevel] = useState<number>(() => Math.max(1, Math.min(5, initialLevel)));
   const [isLevel5Passed, setIsLevel5Passed] = useState<boolean>(false);
@@ -128,23 +134,29 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
     const currentChoices = [target, ...selectedDistractors].sort(() => Math.random() - 0.5);
     setChoices(currentChoices);
 
+    speakPrompt(currentLvl, target);
+  };
+
+  const speakPrompt = (currentLvl: number, target: FamilyMember) => {
     // Auto-voice prompt: Level 4/5 uses short relation prompt for higher cognitive stimulation
+    const targetRelation = getFamilyMemberRelation(target, preferredLanguage);
     const promptText =
       currentLvl >= 4
-        ? format(t.games.faces.questionFindShort, {
-            relation: target.relationshipAs || target.relationship,
+        ? format(currentT.games.faces.questionFindShort, {
+            relation: targetRelation,
           })
-        : language === 'as'
-        ? format(t.games.faces.questionFind, {
-            relation: target.relationshipAs || target.relationship,
-            name: target.name,
-          })
-        : format(t.games.faces.questionFind, {
-            relation: target.relationship,
+        : format(currentT.games.faces.questionFind, {
+            relation: targetRelation,
             name: target.name,
           });
 
-    audioService.speakText(promptText, language);
+    audioService.speakText(promptText, preferredLanguage);
+  };
+
+  const handleSpeakOption = (e: React.MouseEvent, member: FamilyMember) => {
+    e.stopPropagation();
+    const optionText = `${member.name}, ${getFamilyMemberRelation(member, preferredLanguage)}`;
+    audioService.speakText(optionText, preferredLanguage);
   };
 
   useEffect(() => {
@@ -190,18 +202,15 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
       setNextLevel(computedNext);
       setIsLevel5Passed(isPass && level >= 5);
 
-      // Play family member voice recording automatically!
-      if (member.voiceAudioUrl) {
-        setVoicePlaying(true);
-        try {
-          await audioService.playVoice(member.voiceAudioUrl);
-        } catch {
-          audioService.playSuccessChime();
-        }
-        setVoicePlaying(false);
-      } else {
+      // Play family member voice spoken greeting in preferred language
+      const greeting = getFamilyMemberTranscript(member, preferredLanguage);
+      setVoicePlaying(true);
+      try {
+        await audioService.speakText(greeting, preferredLanguage);
+      } catch {
         audioService.playSuccessChime();
       }
+      setVoicePlaying(false);
 
       // Show warm praise modal
       setTimeout(() => {
@@ -221,10 +230,7 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
 
   if (!targetMember) return null;
 
-  const relationLabel =
-    language === 'as'
-      ? targetMember.relationshipAs || targetMember.relationship
-      : targetMember.relationship;
+  const relationLabel = getFamilyMemberRelation(targetMember, preferredLanguage);
 
   return (
     <div className="max-w-xl mx-auto px-4 py-4 sm:py-6 flex flex-col items-center">
@@ -235,11 +241,11 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
           className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white border-2 border-sage-200 text-sage-800 font-bold hover:bg-sage-50 transition shadow-sm"
         >
           <ArrowLeft className="w-6 h-6 text-sage-700" />
-          <span className="text-base">{t.common.back}</span>
+          <span className="text-base">{currentT.common.back}</span>
         </button>
 
         <h1 className="text-xl sm:text-2xl font-black text-sage-900 flex items-center gap-2">
-          <span>🌸</span> {t.games.faces.title}
+          <span>🌸</span> {currentT.games.faces.title}
         </h1>
 
         <button
@@ -252,16 +258,26 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
       </div>
 
       {/* Dementia-Friendly Question Banner */}
-      <div className="w-full bg-sage-50 border-3 border-sage-300 rounded-3xl p-5 mb-6 text-center shadow-sm">
+      <div className="w-full bg-sage-50 border-3 border-sage-300 rounded-3xl p-5 mb-6 text-center shadow-sm flex flex-col items-center">
         <p className="text-sm font-bold text-sage-700 uppercase tracking-wider mb-1">
-          {t.patient.tapToChoose}
+          {currentT.patient.tapToChoose}
         </p>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-sage-950 leading-tight">
-          {format(t.games.faces.questionFind, {
+          {format(currentT.games.faces.questionFind, {
             relation: relationLabel,
             name: targetMember.name,
           })}
         </h2>
+        <button
+          type="button"
+          onClick={() => targetMember && speakPrompt(clampedLevel, targetMember)}
+          className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-sage-200/80 hover:bg-sage-300 text-sage-900 text-sm font-bold transition active:scale-95"
+          title="Replay prompt audio"
+          aria-label="Replay prompt audio"
+        >
+          <Volume2 className="w-5 h-5 text-sage-700" />
+          <span>{currentT.games.voices?.replayVoice || 'Replay'}</span>
+        </button>
       </div>
 
       {/* Voice Playing Indicator */}
@@ -269,7 +285,7 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
         <div className="w-full bg-amber-100 border-2 border-amber-300 text-amber-900 rounded-2xl p-3 mb-4 flex items-center justify-center gap-3 animate-soft-pulse">
           <Volume2 className="w-6 h-6 animate-bounce" />
           <span className="font-bold text-base">
-            {targetMember.name}: {language === 'as' ? targetMember.voiceTranscriptAs : targetMember.voiceTranscriptEn}
+            {targetMember.name}: {getFamilyMemberTranscript(targetMember, preferredLanguage)}
           </span>
         </div>
       )}
@@ -321,8 +337,27 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
                 {member.name}
               </span>
               <span className="text-base font-semibold text-sage-700 bg-sage-100 px-3 py-1 rounded-full">
-                {language === 'as' ? member.relationshipAs || member.relationship : member.relationship}
+                {getFamilyMemberRelation(member, preferredLanguage)}
               </span>
+
+              {/* Spoken Answer Option Button */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => handleSpeakOption(e, member)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSpeakOption(e as unknown as React.MouseEvent, member);
+                  }
+                }}
+                className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage-50 hover:bg-sage-100 text-sage-800 text-xs font-bold border border-sage-200 transition active:scale-95 cursor-pointer"
+                title="Listen option"
+                aria-label="Listen option"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-sage-600" />
+                <span>{member.name}</span>
+              </div>
             </button>
           );
         })}
@@ -331,7 +366,7 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
       {/* Gentle feedback prompt on incorrect tap */}
       {isCorrect === false && (
         <p className="text-base font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 mb-4 animate-fadeIn">
-          {t.games.faces.tryAgain}
+          {currentT.games.faces.tryAgain}
         </p>
       )}
 
@@ -339,12 +374,12 @@ export const FamiliarFacesGame: React.FC<FamiliarFacesGameProps> = ({
       {/* Feedback Celebration Modal */}
       <GameFeedbackModal
         isOpen={showFeedbackModal}
-        gameTitle={t.games.faces.title}
-        customMessage={format(t.games.faces.correctMessage, {
+        gameTitle={currentT.games.faces.title}
+        customMessage={format(currentT.games.faces.correctMessage, {
           name: targetMember.name,
           relation: relationLabel,
         })}
-        nextButtonText={isLevel5Passed ? 'Next Activity' : 'Next Level'}
+        nextButtonText={isLevel5Passed ? (currentT.patient?.playNextGame || 'Next Activity') : `${currentT.patient.level} ${nextLevel}`}
         onPlayNext={() => {
           setShowFeedbackModal(false);
           if (isLevel5Passed) {

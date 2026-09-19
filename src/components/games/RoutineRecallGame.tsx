@@ -6,7 +6,7 @@ import { audioService } from '../../services/audioService';
 import { db } from '../../services/db';
 import { api } from '../../services/api';
 import { GameFeedbackModal } from '../patient/GameFeedbackModal';
-import { INITIAL_ROUTINES } from '../../services/seedData';
+import { INITIAL_ROUTINES, getRoutineItemTitle } from '../../services/seedData';
 
 interface RoutineRecallGameProps {
   routines: RoutineItem[];
@@ -21,7 +21,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
   onBack,
   onPlayNext,
 }) => {
-  const { t, language } = useLanguage();
+  const { t, language, format } = useLanguage();
   const [level, setLevel] = useState<number>(Math.max(1, Math.min(5, initialLevel)));
   const [nextLevel, setNextLevel] = useState<number>(() => Math.max(1, Math.min(5, initialLevel)));
   const [isLevel5Passed, setIsLevel5Passed] = useState<boolean>(false);
@@ -82,7 +82,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
     const shuffled = [...selected].sort(() => Math.random() - 0.5);
     setShuffledOptions(shuffled);
 
-    const voicePrompt = language === 'as' ? t.games.routine.autoVoicePrompt : t.games.routine.autoVoicePrompt;
+    const voicePrompt = t.games.routine.autoVoicePrompt;
     audioService.speakText(voicePrompt, language);
   };
 
@@ -95,7 +95,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
 
   useEffect(() => {
     startRound(level);
-  }, [level, routines]);
+  }, [level, routines, language]);
 
   const handleSelectOption = (item: RoutineItem) => {
     if (isCompleted) return;
@@ -157,35 +157,36 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
   };
 
   const getPeriodBadge = (period: string) => {
+    const periods = t.caregiver.routine.periods;
     switch (period) {
       case 'morning':
         return {
           icon: <Sun className="w-4 h-4 text-amber-500" />,
-          label: language === 'as' ? 'পুৱা' : 'Morning',
+          label: periods.morning || 'Morning',
           bg: 'bg-amber-100 text-amber-800',
         };
       case 'afternoon':
         return {
           icon: <Sun className="w-4 h-4 text-orange-500" />,
-          label: language === 'as' ? 'দুপৰীয়া' : 'Afternoon',
+          label: periods.afternoon || 'Afternoon',
           bg: 'bg-orange-100 text-orange-800',
         };
       case 'evening':
         return {
           icon: <Moon className="w-4 h-4 text-indigo-500" />,
-          label: language === 'as' ? 'সন্ধিয়া' : 'Evening',
+          label: periods.evening || 'Evening',
           bg: 'bg-indigo-100 text-indigo-800',
         };
       case 'night':
         return {
           icon: <Moon className="w-4 h-4 text-purple-500" />,
-          label: language === 'as' ? 'নিশা' : 'Night',
+          label: periods.night || 'Night',
           bg: 'bg-purple-100 text-purple-800',
         };
       default:
         return {
           icon: <Sun className="w-4 h-4 text-sage-600" />,
-          label: language === 'as' ? 'দৈনন্দিন' : 'Daily',
+          label: t.caregiver.tabs.routine || 'Daily',
           bg: 'bg-sage-100 text-sage-800',
         };
     }
@@ -229,7 +230,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
       {/* Target Slots: First, Then, Later */}
       <div className="w-full mb-6">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">
-          {language === 'as' ? 'দিনটোৰ শুদ্ধ ক্ৰম' : 'Correct Order of the Day'}
+          {t.games.routine.instruction}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -263,7 +264,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
                   <div className="flex-1 flex items-center justify-between">
                     <div>
                       <p className="text-lg sm:text-xl font-bold text-gray-900">
-                        {language === 'as' ? placed.titleAs : placed.titleEn}
+                        {getRoutineItemTitle(placed, language)}
                       </p>
                       <p className="text-xs font-semibold text-gray-500 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
@@ -274,7 +275,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
                   </div>
                 ) : (
                   <div className="text-gray-400 font-semibold text-base">
-                    {language === 'as' ? `${stepLabel} কি কৰে?` : `What do we do ${stepLabel}?`}
+                    {format(t.games.routine.questionWhatNext, { current: stepLabel })}
                   </div>
                 )}
               </div>
@@ -287,7 +288,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
       {shuffledOptions.length > 0 && (
         <div className="w-full mb-6">
           <p className="text-sm font-bold text-sage-800 mb-3 text-center">
-            {language === 'as' ? 'পৰৱৰ্তী কামটোত স্পৰ্শ কৰক:' : 'Tap the next activity:'}
+            {t.games.routine.tapToPlace}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {shuffledOptions.map((item) => {
@@ -311,7 +312,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
                     </span>
                   </div>
                   <span className="text-lg sm:text-xl font-black text-gray-900 leading-snug">
-                    {language === 'as' ? item.titleAs : item.titleEn}
+                    {getRoutineItemTitle(item, language)}
                   </span>
                 </button>
               );
@@ -326,7 +327,7 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         isOpen={showFeedbackModal}
         gameTitle={t.games.routine.title}
         customMessage={t.games.routine.correctMessage}
-        nextButtonText={isLevel5Passed ? 'Next Activity' : 'Next Level'}
+        nextButtonText={isLevel5Passed ? t.patient.playNextGame : `${t.patient.level} ${nextLevel}`}
         onPlayNext={() => {
           setShowFeedbackModal(false);
           if (isLevel5Passed) {

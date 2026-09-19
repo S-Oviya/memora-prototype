@@ -9,9 +9,9 @@ import { ny } from './ny';
 import { trp } from './trp';
 import { Language } from '../types';
 
-type TranslationType = typeof en;
+export type TranslationType = typeof en;
 
-const translations: Record<Language, TranslationType> = {
+export const translations: Record<Language, TranslationType> = {
   en,
   as: as as unknown as TranslationType,
   bn,
@@ -21,6 +21,8 @@ const translations: Record<Language, TranslationType> = {
   ny,
   trp,
 };
+
+export const getTranslations = (lang: Language): TranslationType => translations[lang] || en;
 
 export interface LanguageOption {
   code: Language;

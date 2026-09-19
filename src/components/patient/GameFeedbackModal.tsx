@@ -38,7 +38,7 @@ export const GameFeedbackModal: React.FC<GameFeedbackModalProps> = ({
           particleCount: 50,
           spread: 60,
           origin: { y: 0.6 },
-          colors: ['#4E8762', '#E07A5F', '#F4A261', '#E76F51', '#2A9D8F'],
+          colors: ['#B85C62', '#E07A5F', '#F4A261', '#E76F51', '#2A9D8F'],
         });
       } catch {
         // ignore

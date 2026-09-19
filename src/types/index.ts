@@ -27,6 +27,13 @@ export interface FamilyMember {
   voiceAudioUrl?: string;
   voiceTranscriptEn?: string;
   voiceTranscriptAs?: string;
+  voiceTranscriptBn?: string;
+  voiceTranscriptNe?: string;
+  voiceTranscriptLus?: string;
+  voiceTranscriptKha?: string;
+  voiceTranscriptNy?: string;
+  voiceTranscriptTrp?: string;
+  voiceTranscripts?: Partial<Record<Language, string>>;
   notes?: string;
 }
 
@@ -166,11 +173,39 @@ export interface CaregiverGuidanceTip {
   id: string;
   titleEn: string;
   titleAs: string;
+  titleBn?: string;
+  titleNe?: string;
+  titleLus?: string;
+  titleKha?: string;
+  titleNy?: string;
+  titleTrp?: string;
   categoryEn: string;
   categoryAs: string;
+  categoryBn?: string;
+  categoryNe?: string;
+  categoryLus?: string;
+  categoryKha?: string;
+  categoryNy?: string;
+  categoryTrp?: string;
   summaryEn: string;
   summaryAs: string;
+  summaryBn?: string;
+  summaryNe?: string;
+  summaryLus?: string;
+  summaryKha?: string;
+  summaryNy?: string;
+  summaryTrp?: string;
   bulletPointsEn: string[];
   bulletPointsAs: string[];
+  bulletPointsBn?: string[];
+  bulletPointsNe?: string[];
+  bulletPointsLus?: string[];
+  bulletPointsKha?: string[];
+  bulletPointsNy?: string[];
+  bulletPointsTrp?: string[];
+  titles?: Partial<Record<Language, string>>;
+  categories?: Partial<Record<Language, string>>;
+  summaries?: Partial<Record<Language, string>>;
+  bulletPoints?: Partial<Record<Language, string[]>>;
   icon: string;
 }

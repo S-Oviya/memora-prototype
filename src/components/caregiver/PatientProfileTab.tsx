@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Heart, Shield, Check, Save, KeyRound, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { useLanguage } from '../../locales/LanguageContext';
+import { useLanguage, SUPPORTED_LANGUAGES } from '../../locales/LanguageContext';
 import { Patient, DementiaStage, Language } from '../../types';
 import { db } from '../../services/db';
 import { AccessibleButton } from '../common/AccessibleButton';
@@ -18,6 +18,10 @@ export const PatientProfileTab: React.FC<PatientProfileTabProps> = ({
   const [formData, setFormData] = useState<Patient>({ ...patient });
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  useEffect(() => {
+    setFormData({ ...patient });
+  }, [patient]);
+
   // Caregiver Password Management State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -27,6 +31,13 @@ export const PatientProfileTab: React.FC<PatientProfileTabProps> = ({
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [pwdSuccess, setPwdSuccess] = useState<string | null>(null);
+
+  const handleLanguageChange = (newLang: Language) => {
+    const updated = { ...formData, preferredLanguage: newLang };
+    setFormData(updated);
+    db.savePatient(updated);
+    onUpdatePatient(updated);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,11 +145,14 @@ export const PatientProfileTab: React.FC<PatientProfileTabProps> = ({
             </label>
             <select
               value={formData.preferredLanguage}
-              onChange={(e) => setFormData({ ...formData, preferredLanguage: e.target.value as Language })}
+              onChange={(e) => handleLanguageChange(e.target.value as Language)}
               className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-sage-500 focus:ring-4 focus:ring-sage-100 font-semibold text-gray-900 outline-none transition bg-white"
             >
-              <option value="as">অসমীয়া (Assamese)</option>
-              <option value="en">English</option>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="text-gray-900 bg-white font-medium">
+                  {lang.nativeLabel} ({lang.label})
+                </option>
+              ))}
             </select>
           </div>
         </div>

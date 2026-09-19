@@ -216,14 +216,14 @@ class AudioService {
 
   // Returns whether high-quality voice audio is currently supported for a language
   isVoiceSupported(lang: string): boolean {
-    const supported = ['en', 'as', 'bn', 'ne'];
+    const supported = ['en', 'as', 'bn', 'ne', 'ny', 'lus', 'kha', 'trp'];
     return supported.includes(lang.toLowerCase());
   }
 
   // Spoken voice guidance:
   // 1. Attempts backend Neural TTS (guarantees authentic Assamese, Bengali, Nepali, and English pronunciation)
   // 2. Falls back to browser SpeechSynthesis if backend is unavailable and matching voice is found
-  // 3. Gracefully resolves without error if no speech engine is available (e.g. for Mizo, Khasi, Nyishi, Kokborok)
+  // 3. Gracefully resolves without error if no speech engine is available
   async speakText(text: string, lang: string = 'en'): Promise<void> {
     if (!text || !text.trim()) return;
 
@@ -251,17 +251,25 @@ class AudioService {
           en: ['en-IN', 'en-GB', 'en-US'],
           as: ['as-IN', 'bn-IN'], // If browser lacks as-IN, bn-IN can articulate Eastern Nagari phonetically
           bn: ['bn-IN', 'bn-BD'],
-          ne: ['ne-NP'],
+          ne: ['ne-NP', 'hi-IN'],
+          ny: ['hi-IN', 'ne-NP'], // Devanagari script phonetics
+          lus: ['hi-IN', 'ne-NP'], // Devanagari script phonetics
+          kha: ['bn-IN', 'as-IN'], // Eastern Nagari script phonetics
+          trp: ['bn-IN', 'as-IN'], // Eastern Nagari script phonetics
         };
 
         const targetLocales = langMap[lang.toLowerCase()] || [];
-        if (targetLocales.length > 0 && voices.length > 0) {
-          const matchedVoice = voices.find((v) =>
-            targetLocales.some((loc) => v.lang.toLowerCase().startsWith(loc.toLowerCase()))
-          );
-          if (matchedVoice) {
-            utterance.voice = matchedVoice;
-            utterance.lang = matchedVoice.lang;
+        if (targetLocales.length > 0) {
+          if (voices.length > 0) {
+            const matchedVoice = voices.find((v) =>
+              targetLocales.some((loc) => v.lang.toLowerCase().startsWith(loc.toLowerCase()))
+            );
+            if (matchedVoice) {
+              utterance.voice = matchedVoice;
+              utterance.lang = matchedVoice.lang;
+            } else {
+              utterance.lang = targetLocales[0];
+            }
           } else {
             utterance.lang = targetLocales[0];
           }

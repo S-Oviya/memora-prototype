@@ -3,6 +3,7 @@ import { Plus, Clock, Trash2, Sun, Moon, Coffee, Utensils, Footprints, Sparkles,
 import { useLanguage } from '../../locales/LanguageContext';
 import { RoutineItem, RoutinePeriod } from '../../types';
 import { db } from '../../services/db';
+import { getRoutineItemTitle } from '../../services/seedData';
 import { AccessibleButton } from '../common/AccessibleButton';
 
 interface RoutineManagerTabProps {
@@ -121,15 +122,15 @@ export const RoutineManagerTab: React.FC<RoutineManagerTabProps> = ({
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-warm-100 px-2 py-0.5 rounded-full text-warm-800">
                       {getPeriodIcon(item.period)}
-                      <span className="capitalize">{item.period}</span>
+                      <span>{t.caregiver.routine.periods[item.period] || item.period}</span>
                     </span>
                   </div>
 
                   <h3 className="text-lg font-black text-gray-900">
-                    {language === 'as' ? item.titleAs : item.titleEn}
+                    {getRoutineItemTitle(item, language)}
                   </h3>
                   <p className="text-xs text-gray-400">
-                    {language === 'as' ? item.titleEn : item.titleAs}
+                    {language === 'en' ? item.titleAs : item.titleEn}
                   </p>
                 </div>
               </div>
@@ -182,10 +183,10 @@ export const RoutineManagerTab: React.FC<RoutineManagerTabProps> = ({
                     onChange={(e) => setPeriod(e.target.value as RoutinePeriod)}
                     className="w-full px-4 py-2.5 rounded-2xl border-2 border-gray-200 font-semibold bg-white"
                   >
-                    <option value="morning">Morning</option>
-                    <option value="afternoon">Afternoon</option>
-                    <option value="evening">Evening</option>
-                    <option value="night">Night</option>
+                    <option value="morning">{t.caregiver.routine.periods.morning}</option>
+                    <option value="afternoon">{t.caregiver.routine.periods.afternoon}</option>
+                    <option value="evening">{t.caregiver.routine.periods.evening}</option>
+                    <option value="night">{t.caregiver.routine.periods.night}</option>
                   </select>
                 </div>
               </div>

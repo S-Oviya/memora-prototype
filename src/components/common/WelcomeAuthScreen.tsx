@@ -71,7 +71,7 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
           {/* Patient Role Button */}
           <button
             onClick={() => onSelectRole('patient')}
-            className="w-full text-left p-5 rounded-3xl bg-gradient-to-br from-sage-50 to-emerald-50 hover:from-sage-100 hover:to-emerald-100 border-3 border-sage-300 hover:border-sage-500 transition-all duration-200 active:scale-95 shadow-md flex items-center justify-between group"
+            className="w-full text-left p-5 rounded-3xl bg-gradient-to-br from-sage-50 to-rose-50 hover:from-sage-100 hover:to-rose-100 border-3 border-sage-300 hover:border-sage-500 transition-all duration-200 active:scale-95 shadow-md flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-sage-600 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition">

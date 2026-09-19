@@ -24,11 +24,11 @@
 @keyframes soft-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 4px 14px 0 rgba(78, 135, 98, 0.25);
+    box-shadow: 0 4px 14px 0 rgba(184, 92, 98, 0.25);
   }
   50% {
     transform: scale(1.03);
-    box-shadow: 0 8px 24px 0 rgba(78, 135, 98, 0.4);
+    box-shadow: 0 8px 24px 0 rgba(184, 92, 98, 0.4);
   }
 }
 

@@ -29,6 +29,9 @@ class DatabaseService {
   savePatient(patient: Patient): void {
     try {
       localStorage.setItem(KEYS.PATIENT, JSON.stringify(patient));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('memora_patient_updated', { detail: patient }));
+      }
     } catch (e) {
       console.error('Failed to save patient', e);
     }

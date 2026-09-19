@@ -90,7 +90,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-[#1C2A1E] flex flex-col selection:bg-sage-200">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#231819] flex flex-col selection:bg-sage-200">
       {/* Universal Dementia-Friendly Navbar */}
       <Navbar
         currentRole={currentRole}
@@ -132,6 +132,7 @@ export const App: React.FC = () => {
               />
             ) : activeGame === 'familiar-faces' ? (
               <FamiliarFacesGame
+                patient={patient}
                 familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
                 onBack={handleBackToHome}
@@ -139,6 +140,7 @@ export const App: React.FC = () => {
               />
             ) : activeGame === 'familiar-voices' ? (
               <FamiliarVoicesGame
+                patient={patient}
                 familyMembers={familyMembers}
                 initialLevel={currentLevelForGame}
                 onBack={handleBackToHome}

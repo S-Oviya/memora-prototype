@@ -111,6 +111,7 @@ export const CaregiverDashboard: React.FC<CaregiverDashboardProps> = ({
         <FamilyMembersTab
           familyMembers={familyMembers}
           patientId={patient.id}
+          patient={patient}
           onRefresh={onRefreshData}
         />
       )}
