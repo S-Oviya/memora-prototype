@@ -27,8 +27,14 @@ dist-ssr
 backend/.venv/
 backend/.env
 backend/*.db
+backend/models/
+**/.tts_cache/
+tts-research/models/
+tts-research/samples/*.wav
+*.wav
 .env
 .venv/
 __pycache__/
 *.pyc
 memora.db
+backend/test_output_samples/

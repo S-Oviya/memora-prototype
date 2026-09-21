@@ -18,11 +18,15 @@ async def generate_speech(
             detail=f"Neural voice not available for language '{lang}'. Frontend will fall back to text gracefully."
         )
 
+    is_wav = audio_bytes.startswith(b"RIFF")
+    media_type = "audio/wav" if is_wav else "audio/mpeg"
+    filename = "speech.wav" if is_wav else "speech.mp3"
+
     return Response(
         content=audio_bytes,
-        media_type="audio/mpeg",
+        media_type=media_type,
         headers={
             "Cache-Control": "public, max-age=86400",
-            "Content-Disposition": "inline; filename=speech.mp3"
+            "Content-Disposition": f"inline; filename={filename}"
         }
     )

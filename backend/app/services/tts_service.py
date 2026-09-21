@@ -59,5 +59,13 @@ class TTSService:
             with open(cache_file, 'rb') as f:
                 return f.read()
         except Exception as e:
-            print(f"TTS generation error for lang {lang}: {e}")
-            return None
+            # Fall back to local offline neural TTS engine
+            try:
+                from ..tts.engine import tts_engine
+                wav_bytes = tts_engine.synthesize_wav_bytes(processed_text, lang_key)
+                with open(cache_file, 'wb') as f:
+                    f.write(wav_bytes)
+                return wav_bytes
+            except Exception as inner_e:
+                print(f"TTS local offline fallback error for lang {lang}: {inner_e}")
+                return None

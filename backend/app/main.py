@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .db import engine, Base, SessionLocal
 from .models import Patient, FamilyMember, Routine, MusicPreference, GameAttempt
 from .routes import patients, attempts, analytics, recommendations, insights, sync, tts
+from .tts import tts_router
 
 load_dotenv()
 
@@ -35,6 +36,7 @@ app.include_router(recommendations.router)
 app.include_router(insights.router)
 app.include_router(sync.router)
 app.include_router(tts.router)
+app.include_router(tts_router)
 
 @app.get("/api/health")
 def health_check():
@@ -45,7 +47,8 @@ def health_check():
         "version": "2.0.0",
         "database": "sqlite",
         "geminiConfigured": api_key_present,
-        "supportedVoices": ["en", "as", "bn", "ne"]
+        "supportedVoices": ["en", "as", "bn", "ne", "miz", "lus", "njz", "trp"],
+        "offlineTTS": True
     }
 
 def seed_database_if_empty():

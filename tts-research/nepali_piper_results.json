@@ -1,0 +1,16 @@
+{
+  "model_id": "rhasspy/piper-voices:ne_NP-google-medium",
+  "language": "Nepali",
+  "iso": "ne",
+  "input_text": "नमस्ते रमेश, तपाईंलाई कस्तो छ?",
+  "output_file": "C:\\Users\\yogik\\memora-prototype\\tts-research\\samples\\sample_piper_nep.wav",
+  "model_size_mb": 73.21,
+  "load_time_sec": 2.49,
+  "inference_time_sec": 0.403,
+  "audio_duration_sec": 2.659,
+  "sample_rate": 22050,
+  "file_size_bytes": 117292,
+  "is_valid_wav": true,
+  "success": true,
+  "cpu_practicality": "Ultra-fast local ONNX CPU inference (< 0.5s)"
+}
