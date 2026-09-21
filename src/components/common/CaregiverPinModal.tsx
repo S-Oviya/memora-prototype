@@ -26,12 +26,15 @@ export const CaregiverPinModal: React.FC<CaregiverPinModalProps> = ({ isOpen, on
 
   if (!isOpen) return null;
 
-  const targetLength = db.getCaregiverPin().length;
+  const targetLength = db.getCaregiverPinLength();
 
   const verifyPin = (code: string) => {
     if (!code) return;
     const isValid = db.verifyCaregiverPin(code);
     if (isValid) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('memora_session_pin', code);
+      }
       audioService.playSuccessChime();
       setPin('');
       onSuccess();

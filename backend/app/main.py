@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .db import engine, Base, SessionLocal
-from .models import Patient, FamilyMember, Routine, MusicPreference, GameAttempt
+from .models import Patient, FamilyMember, Routine, MusicPreference, GameAttempt, Reminder, Alert
 from .routes import patients, attempts, analytics, recommendations, insights, sync, tts
 
 load_dotenv()
@@ -12,20 +12,51 @@ load_dotenv()
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+import logging
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger("memora_api")
+
 app = FastAPI(
     title="Memora Cognitive Care API",
     description="Backend for Memora dementia care prototype supporting cognitive analytics, Gemini AI, multilingual TTS, and offline sync.",
     version="2.0.0"
 )
 
-# CORS
+# Safe CORS Configuration
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://localhost:4173")
+allowed_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Caregiver-PIN", "X-Healthcare-PIN", "X-User-Role", "Accept"],
 )
+
+# Security Response Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+# Sanitized Error Handling: prevent leaking internal tracebacks/paths
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, (StarletteHTTPException, RequestValidationError)):
+        raise exc
+    logger.error(f"Unhandled server error on {request.method} {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please contact the administrator."}
+    )
 
 # Include routers
 app.include_router(patients.router)
@@ -119,6 +150,155 @@ def seed_database_if_empty():
                 Routine(id="routine-6", patient_id="patient-ramesh-1", time="06:30 PM", period="evening", title_en="Evening Prayer & Calm Music", title_as="সন্ধিয়াৰ প্ৰাৰ্থনা আৰু শান্ত সংগীত", icon="sparkles", routine_order=6, completed=False),
             ]
             db.add_all(routines_data)
+
+            # Reminders
+            reminders_data = [
+                Reminder(
+                    id="rem-1-medicine",
+                    patient_id="patient-ramesh-1",
+                    title="Morning Blood Pressure & Memory Medicine",
+                    title_en="Morning Blood Pressure & Memory Medicine",
+                    title_as="পুৱাৰ ৰক্তচাপ আৰু স্মৃতিবৰ্ধক ঔষধ",
+                    reminder_type="medicine",
+                    time="09:00 AM",
+                    schedule="Daily after breakfast",
+                    notes="Take 1 tablet Donepezil 5mg and 1 tablet Telmisartan with warm water.",
+                    notes_en="Take 1 tablet Donepezil 5mg and 1 tablet Telmisartan with warm water.",
+                    notes_as="পুৱাৰ আহাৰৰ পাছত এগিলাচ কুহুমীয়া পানীৰ সৈতে টেবলেট খাব।",
+                    enabled=True,
+                    completed_today=False,
+                ),
+                Reminder(
+                    id="rem-2-hydration",
+                    patient_id="patient-ramesh-1",
+                    title="Drink a Glass of Fresh Water",
+                    title_en="Drink a Glass of Fresh Water",
+                    title_as="এগিলাচ বিশুদ্ধ পানী খাওক",
+                    reminder_type="hydration",
+                    time="11:00 AM",
+                    schedule="Every 2 hours",
+                    notes="Offer water gently from the traditional brass jug.",
+                    notes_en="Offer water gently from the traditional brass jug.",
+                    notes_as="পিতলৰ জগৰ পৰা এগিলাচ পানী মৰমেৰে খাবলৈ দিয়ক।",
+                    enabled=True,
+                    completed_today=False,
+                ),
+                Reminder(
+                    id="rem-3-activity",
+                    patient_id="patient-ramesh-1",
+                    title="Veranda Walk & Garden Fresh Air",
+                    title_en="Veranda Walk & Garden Fresh Air",
+                    title_as="বাৰান্দাত খোজ কঢ়া আৰু ফুলনিৰ বতাহ",
+                    reminder_type="activity",
+                    time="04:30 PM",
+                    schedule="Daily afternoon",
+                    notes="15 minutes slow walk accompanied by daughter Sunita or grandson Priyam.",
+                    notes_en="15 minutes slow walk accompanied by daughter Sunita or grandson Priyam.",
+                    notes_as="জীয়াৰী সুনীতা বা নাতি প্ৰিয়মৰ সৈতে ১৫ মিনিট বাৰান্দাত শান্তভাৱে খোজ কাঢ়ক।",
+                    enabled=True,
+                    completed_today=False,
+                ),
+                Reminder(
+                    id="rem-4-appointment",
+                    patient_id="patient-ramesh-1",
+                    title="Neurology Review with Dr. B. Sharma",
+                    title_en="Neurology Review with Dr. B. Sharma",
+                    title_as="ডাঃ বি. শৰ্মাৰ সৈতে স্নায়ু পৰীক্ষা",
+                    reminder_type="appointment",
+                    time="11:30 AM",
+                    schedule="Thursday (Monthly Check-up)",
+                    notes="Apollo Clinic Guwahati. Carry previous MRI scans and Memora activity trends.",
+                    notes_en="Apollo Clinic Guwahati. Carry previous MRI scans and Memora activity trends.",
+                    notes_as="গৌহাটী এপোলো ক্লিনিক। পুৰণি এম.আৰ.আই ৰিপৰ্ট আৰু মেমোৰা ডায়ৰী লগত নিব।",
+                    enabled=True,
+                    completed_today=False,
+                ),
+            ]
+            db.add_all(reminders_data)
+
+            # Initial Alerts
+            alerts_data = [
+                Alert(
+                    id="alert-1-medicine",
+                    patient_id="patient-ramesh-1",
+                    alert_type="missed_medicine",
+                    severity="high",
+                    status="unread",
+                    title="Missed Morning Medicine: Donepezil (5mg)",
+                    title_en="Missed Morning Medicine: Donepezil (5mg)",
+                    title_as="পুৱাৰ ঔষধ খাবলৈ বাকী: ডনেপেজিল (৫ মি.গ্ৰা.)",
+                    description="Patient did not acknowledge the 09:00 AM medication prompt on the patient tablet.",
+                    description_en="Patient did not acknowledge the 09:00 AM medication prompt on the patient tablet.",
+                    description_as="ৰোগীয়ে টেবলেটত পুৱা ৯:০০ বজাৰ ঔষধৰ জাননী নিশ্চিত কৰা নাই।",
+                    relevant_item_title="Morning Blood Pressure & Memory Medicine",
+                    relevant_item_id="rem-1-medicine",
+                    due_time="09:00 AM",
+                ),
+                Alert(
+                    id="alert-2-hydration",
+                    patient_id="patient-ramesh-1",
+                    alert_type="missed_hydration",
+                    severity="medium",
+                    status="unread",
+                    title="Missed Hydration Reminder",
+                    title_en="Missed Hydration Reminder",
+                    title_as="পানী খোৱাৰ সময় পাৰ হ’ল",
+                    description="Scheduled 11:00 AM hydration reminder has not been confirmed. Please offer a fresh glass of water.",
+                    description_en="Scheduled 11:00 AM hydration reminder has not been confirmed. Please offer a fresh glass of water.",
+                    description_as="১১:০০ বজাৰ পানী খোৱাৰ সোঁৱৰণি নিশ্চিত হোৱা নাই। অনুগ্ৰহ কৰি কুহুমীয়া পানী খাবলৈ দিয়ক।",
+                    relevant_item_title="Drink a Glass of Fresh Water",
+                    relevant_item_id="rem-2-hydration",
+                    due_time="11:00 AM",
+                ),
+                Alert(
+                    id="alert-3-activity",
+                    patient_id="patient-ramesh-1",
+                    alert_type="missed_activity",
+                    severity="low",
+                    status="read",
+                    title="Scheduled Daily Activity Pending",
+                    title_en="Scheduled Daily Activity Pending",
+                    title_as="দৈনন্দিন কাৰ্যসূচী বাকী",
+                    description="Afternoon veranda walk scheduled for 04:30 PM yesterday was not recorded.",
+                    description_en="Afternoon veranda walk scheduled for 04:30 PM yesterday was not recorded.",
+                    description_as="আবেলি ৪:৩০ বজাৰ বাৰান্দাৰ খোজ কঢ়াৰ কাৰ্যসূচী সম্পূৰ্ণ কৰা বুলি পঞ্জীয়ন হোৱা নাই।",
+                    relevant_item_title="Veranda Walk & Garden Fresh Air",
+                    relevant_item_id="rem-3-activity",
+                    due_time="04:30 PM",
+                ),
+                Alert(
+                    id="alert-4-appointment",
+                    patient_id="patient-ramesh-1",
+                    alert_type="missed_appointment",
+                    severity="high",
+                    status="unread",
+                    title="Medical Appointment Check-in Due",
+                    title_en="Medical Appointment Check-in Due",
+                    title_as="চিকিৎসকৰ পৰামৰ্শৰ সময় উপস্থিত",
+                    description="Upcoming monthly neurology follow-up check-in at Apollo Clinic requires caregiver attention.",
+                    description_en="Upcoming monthly neurology follow-up check-in at Apollo Clinic requires caregiver attention.",
+                    description_as="গৌহাটী এপোলো ক্লিনিকত ডাঃ বি. শৰ্মাৰ সৈতে মাহেকীয়া পৰামৰ্শৰ বাবে প্ৰস্তুতি চাব লাগে।",
+                    relevant_item_title="Neurology Review with Dr. B. Sharma",
+                    relevant_item_id="rem-4-appointment",
+                    due_time="11:30 AM",
+                ),
+                Alert(
+                    id="alert-5-inactivity",
+                    patient_id="patient-ramesh-1",
+                    alert_type="inactivity",
+                    severity="medium",
+                    status="resolved",
+                    title="Inactivity Notice: No Engagement in 14 Hours",
+                    title_en="Inactivity Notice: No Engagement in 14 Hours",
+                    title_as="সক্ৰিয়তাহীনতাৰ জাননী: ১৪ ঘণ্টা ধৰি কোনো কাৰ্যসূচী হোৱা নাই",
+                    description="No cognitive games or routine actions were logged during the overnight-to-morning interval.",
+                    description_en="No cognitive games or routine actions were logged during the overnight-to-morning interval.",
+                    description_as="ৰাতিপুৱাৰ সময়ছোৱাত কোনো জ্ঞানমূলক খেল বা নিয়মীয়া কাৰ্যসূচী পঞ্জীয়ন হোৱা নাছিল।",
+                    relevant_item_title="Cognitive Activity & Daily Engagement",
+                    due_time="Continuous Monitoring",
+                ),
+            ]
+            db.add_all(alerts_data)
 
             # Initial Attempts
             sample_attempts = [

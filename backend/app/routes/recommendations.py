@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..db import get_db
+from ..auth import verify_patient_exists
 from ..schemas import AIRecommendationResponse
 from ..services.analytics_service import AnalyticsService
 
@@ -8,6 +9,7 @@ router = APIRouter(prefix="/api/patients", tags=["recommendation"])
 
 @router.get("/{patient_id}/recommendation", response_model=AIRecommendationResponse)
 def get_recommendation(patient_id: str, db: Session = Depends(get_db)):
+    verify_patient_exists(patient_id, db)
     analytics = AnalyticsService.calculate_patient_analytics(db, patient_id)
     rec_game = analytics["recommendedActivity"]
     rec_level = analytics["recommendedLevel"]

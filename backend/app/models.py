@@ -19,6 +19,8 @@ class Patient(Base):
 
     family_members = orm_relationship("FamilyMember", back_populates="patient", cascade="all, delete-orphan")
     routines = orm_relationship("Routine", back_populates="patient", cascade="all, delete-orphan")
+    reminders = orm_relationship("Reminder", back_populates="patient", cascade="all, delete-orphan")
+    alerts = orm_relationship("Alert", back_populates="patient", cascade="all, delete-orphan")
     music_tracks = orm_relationship("MusicPreference", back_populates="patient", cascade="all, delete-orphan")
     attempts = orm_relationship("GameAttempt", back_populates="patient", cascade="all, delete-orphan")
 
@@ -53,6 +55,49 @@ class Routine(Base):
     completed = Column(Boolean, default=False)
 
     patient = orm_relationship("Patient", back_populates="routines")
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+
+    id = Column(String(64), primary_key=True, default=lambda: f"rem-{uuid.uuid4().hex[:8]}")
+    patient_id = Column(String(64), ForeignKey("patients.id"), nullable=False)
+    title = Column(String(128), nullable=False)
+    title_en = Column(String(128), nullable=True)
+    title_as = Column(String(128), nullable=True)
+    reminder_type = Column(String(32), nullable=False, default="medicine")
+    time = Column(String(64), nullable=False)
+    schedule = Column(String(128), nullable=True, default="Daily")
+    notes = Column(Text, nullable=True)
+    notes_en = Column(Text, nullable=True)
+    notes_as = Column(Text, nullable=True)
+    enabled = Column(Boolean, default=True)
+    completed_today = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    patient = orm_relationship("Patient", back_populates="reminders")
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(String(64), primary_key=True, default=lambda: f"alert-{uuid.uuid4().hex[:8]}")
+    patient_id = Column(String(64), ForeignKey("patients.id"), nullable=False)
+    alert_type = Column(String(32), nullable=False, default="missed_medicine")
+    severity = Column(String(16), nullable=False, default="medium")
+    status = Column(String(16), nullable=False, default="unread")
+    title = Column(String(128), nullable=False)
+    title_en = Column(String(128), nullable=True)
+    title_as = Column(String(128), nullable=True)
+    description = Column(Text, nullable=False)
+    description_en = Column(Text, nullable=True)
+    description_as = Column(Text, nullable=True)
+    relevant_item_title = Column(String(128), nullable=True)
+    relevant_item_id = Column(String(64), nullable=True)
+    due_time = Column(String(64), nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    read_at = Column(DateTime, nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+
+    patient = orm_relationship("Patient", back_populates="alerts")
 
 class MusicPreference(Base):
     __tablename__ = "music_preferences"

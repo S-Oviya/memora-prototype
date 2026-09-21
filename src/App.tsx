@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserRole, Patient, FamilyMember, RoutineItem, FavoriteMusic, GameAttempt, GameId } from './types';
+import { UserRole, Patient, FamilyMember, RoutineItem, ReminderItem, FavoriteMusic, GameAttempt, GameId, CaregiverAlert } from './types';
 import { db } from './services/db';
 import { AdaptiveDifficultyEngine, ALL_GAMES } from './services/adaptiveEngine';
 import { useLanguage } from './locales/LanguageContext';
@@ -20,6 +20,7 @@ import { MatchingFamilyMembersGame } from './components/games/MatchingFamilyMemb
 
 // Caregiver Views
 import { CaregiverDashboard } from './components/caregiver/CaregiverDashboard';
+import { HealthcareDashboard } from './components/healthcare/HealthcareDashboard';
 
 export const App: React.FC = () => {
   const { language } = useLanguage();
@@ -37,6 +38,8 @@ export const App: React.FC = () => {
   const [patient, setPatient] = useState<Patient>(() => db.getPatient());
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>(() => db.getFamilyMembers());
   const [routines, setRoutines] = useState<RoutineItem[]>(() => db.getRoutines());
+  const [reminders, setReminders] = useState<ReminderItem[]>(() => db.getReminders());
+  const [alerts, setAlerts] = useState<CaregiverAlert[]>(() => db.getAlerts());
   const [musicTracks, setMusicTracks] = useState<FavoriteMusic[]>(() => db.getMusicTracks());
   const [gameAttempts, setGameAttempts] = useState<GameAttempt[]>(() => db.getGameAttempts());
 
@@ -44,12 +47,68 @@ export const App: React.FC = () => {
     setPatient(db.getPatient());
     setFamilyMembers(db.getFamilyMembers());
     setRoutines(db.getRoutines());
+    setReminders(db.getReminders());
+    setAlerts(db.getAlerts());
     setMusicTracks(db.getMusicTracks());
     setGameAttempts(db.getGameAttempts());
   };
 
+  useEffect(() => {
+    const handleRemindersUpdated = (e: any) => {
+      if (e.detail) {
+        setReminders(e.detail);
+      } else {
+        setReminders(db.getReminders());
+      }
+    };
+    const handleAlertsUpdated = (e: any) => {
+      if (e.detail) {
+        setAlerts(e.detail);
+      } else {
+        setAlerts(db.getAlerts());
+      }
+    };
+    window.addEventListener('memora_reminders_updated', handleRemindersUpdated as EventListener);
+    window.addEventListener('memora_alerts_updated', handleAlertsUpdated as EventListener);
+    return () => {
+      window.removeEventListener('memora_reminders_updated', handleRemindersUpdated as EventListener);
+      window.removeEventListener('memora_alerts_updated', handleAlertsUpdated as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Periodically and on role switch evaluate active alerts
+    db.checkAndRefreshAlerts();
+  }, [currentRole]);
+
+  const handleToggleReminderCompleted = (id: string) => {
+    db.toggleReminderCompleted(id);
+    refreshData();
+  };
+
+  const handleMarkAlertRead = (id: string) => {
+    db.markAlertRead(id);
+    refreshData();
+  };
+
+  const handleMarkAlertResolved = (id: string) => {
+    db.markAlertResolved(id);
+    refreshData();
+  };
+
+  const handleDeleteAlert = (id: string) => {
+    db.deleteAlert(id);
+    refreshData();
+  };
+
   const handleRoleSelect = (role: UserRole) => {
     localStorage.setItem('memora_has_seen_auth', 'true');
+    if (role !== 'caregiver' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('memora_session_pin');
+    }
+    if (role !== 'healthcare_worker' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('memora_session_healthcare_pin');
+    }
     db.setActiveRole(role);
     setCurrentRole(role);
     setActiveGame(null);
@@ -57,6 +116,12 @@ export const App: React.FC = () => {
   };
 
   const handleSwitchRole = (role: UserRole) => {
+    if (role !== 'caregiver' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('memora_session_pin');
+    }
+    if (role !== 'healthcare_worker' && typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('memora_session_healthcare_pin');
+    }
     db.setActiveRole(role);
     setCurrentRole(role);
     setActiveGame(null);
@@ -105,6 +170,8 @@ export const App: React.FC = () => {
             patient={patient}
             familyMembers={familyMembers}
             routines={routines}
+            reminders={reminders}
+            alerts={alerts}
             musicTracks={musicTracks}
             gameAttempts={gameAttempts}
             onUpdatePatient={(updated) => {
@@ -113,6 +180,17 @@ export const App: React.FC = () => {
             }}
             onRefreshData={refreshData}
             onSwitchToPatient={() => handleSwitchRole('patient')}
+            onMarkAlertRead={handleMarkAlertRead}
+            onMarkAlertResolved={handleMarkAlertResolved}
+            onDeleteAlert={handleDeleteAlert}
+          />
+        ) : currentRole === 'healthcare_worker' ? (
+          <HealthcareDashboard
+            patient={patient}
+            gameAttempts={gameAttempts}
+            reminders={reminders}
+            alerts={alerts}
+            onSwitchToPatient={() => handleSwitchRole('patient')}
           />
         ) : (
           /* Patient Experience (Zero scores, large touch targets, soothing aesthetic) */
@@ -120,6 +198,8 @@ export const App: React.FC = () => {
             {!activeGame ? (
               <PatientHome
                 patient={patient}
+                reminders={reminders}
+                onToggleReminderCompleted={handleToggleReminderCompleted}
                 onSelectGame={handleSelectGame}
                 recommendedGame={recommendedGame}
               />
