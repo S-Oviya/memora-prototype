@@ -76,7 +76,7 @@ def health_check():
         "version": "2.0.0",
         "database": "sqlite",
         "geminiConfigured": api_key_present,
-        "supportedVoices": ["en", "as", "bn", "ne"]
+        "supportedVoices": ["en", "as", "bn", "ne", "lus", "ny", "trp"]
     }
 
 def seed_database_if_empty():
