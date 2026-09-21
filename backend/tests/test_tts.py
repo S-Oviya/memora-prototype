@@ -1,6 +1,12 @@
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
+import sys
+from pathlib import Path
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 import io
 import time
 import wave
@@ -19,6 +25,7 @@ VERIFIED_LANGUAGES = [
     {"code": "miz", "text": "Chibai, i dam em?", "name": "Mizo (Meta MMS)"},
     {"code": "lus", "text": "mi pakhat ka hmu a kawr gray a ha a", "name": "Mizo (NE-TTS)"},
     {"code": "njz", "text": "building agu pute jabu kongpo pa", "name": "Nyishi"},
+    {"code": "ny", "text": "building agu pute jabu kongpo pa", "name": "Nyishi (frontend alias)"},
     {"code": "trp", "text": "ani bwskango kaisa mampli tongo", "name": "Kokborok"},
 ]
 

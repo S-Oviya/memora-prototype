@@ -22,6 +22,12 @@ async def synthesize_speech(payload: TTSRequest):
             detail="Text cannot be empty or whitespace only"
         )
 
+    if language in ("kha", "khasi"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Khasi ('kha') offline neural TTS model is currently unavailable (toiar/Rynsan-TTS is gated with manual author approval; no public pretrained weights exist). Frontend should fall back to visual text or browser speech."
+        )
+
     if language not in LANGUAGE_MAPPING:
         supported_langs = ", ".join(sorted(LANGUAGE_MAPPING.keys()))
         raise HTTPException(

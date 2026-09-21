@@ -42,6 +42,12 @@ socket.getaddrinfo = strict_getaddrinfo
 socket.socket.connect = strict_connect
 socket.create_connection = strict_create_connection
 
+import sys
+from pathlib import Path
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 # Now import FastAPI application
 from fastapi.testclient import TestClient
 from app.main import app
@@ -56,6 +62,7 @@ OFFLINE_LANGUAGES = [
     {"code": "miz", "name": "Mizo (Meta MMS)", "text": "Chibai, i dam em?"},
     {"code": "lus", "name": "Mizo (NE-TTS)", "text": "mi pakhat ka hmu a kawr gray a ha a"},
     {"code": "njz", "name": "Nyishi", "text": "building agu pute jabu kongpo pa"},
+    {"code": "ny", "name": "Nyishi (frontend alias)", "text": "building agu pute jabu kongpo pa"},
     {"code": "trp", "name": "Kokborok", "text": "ani bwskango kaisa mampli tongo"},
 ]
 
@@ -112,3 +119,12 @@ def test_offline_safety_guard_blocks_network():
     with pytest.raises(RuntimeError) as exc_info:
         socket.getaddrinfo("huggingface.co", 443)
     assert "STRICT_OFFLINE_VIOLATION" in str(exc_info.value)
+
+def test_strict_offline_khasi_unsupported_rejection():
+    """Verify that requesting Khasi ('kha') is rejected honestly with 400 Bad Request and zero network calls."""
+    start_blocked_count = len(blocked_attempts)
+    res = client.post("/tts", json={"text": "Khublei", "language": "kha"})
+    new_blocked = blocked_attempts[start_blocked_count:]
+    assert len(new_blocked) == 0, "No network calls should occur for unsupported languages"
+    assert res.status_code == 400
+    assert "unavailable" in res.json()["detail"].lower()
