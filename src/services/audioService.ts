@@ -216,7 +216,7 @@ class AudioService {
 
   // Returns whether high-quality voice audio is currently supported for a language
   isVoiceSupported(lang: string): boolean {
-    const supported = ['en', 'as', 'bn', 'ne', 'ny', 'lus', 'kha', 'trp'];
+    const supported = ['en', 'as', 'bn', 'ne', 'ny', 'lus', 'kha', 'trp', 'mni'];
     return supported.includes(lang.toLowerCase());
   }
 
@@ -252,10 +252,11 @@ class AudioService {
           as: ['as-IN', 'bn-IN'], // If browser lacks as-IN, bn-IN can articulate Eastern Nagari phonetically
           bn: ['bn-IN', 'bn-BD'],
           ne: ['ne-NP', 'hi-IN'],
-          ny: ['hi-IN', 'ne-NP'], // Devanagari script phonetics
-          lus: ['hi-IN', 'ne-NP'], // Devanagari script phonetics
-          kha: ['bn-IN', 'as-IN'], // Eastern Nagari script phonetics
+          ny: ['en-IN', 'hi-IN'],
+          lus: ['en-IN', 'en-GB'],
+          kha: ['en-IN', 'en-GB'],
           trp: ['bn-IN', 'as-IN'], // Eastern Nagari script phonetics
+          mni: ['mni-IN', 'bn-IN', 'en-IN'],
         };
 
         const targetLocales = langMap[lang.toLowerCase()] || [];

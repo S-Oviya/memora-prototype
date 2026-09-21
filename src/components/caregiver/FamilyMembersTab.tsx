@@ -48,6 +48,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
   const [voiceTranscriptKha, setVoiceTranscriptKha] = useState('');
   const [voiceTranscriptNy, setVoiceTranscriptNy] = useState('');
   const [voiceTranscriptTrp, setVoiceTranscriptTrp] = useState('');
+  const [voiceTranscriptMni, setVoiceTranscriptMni] = useState('');
 
   // Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -71,6 +72,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
     setVoiceTranscriptKha('');
     setVoiceTranscriptNy('');
     setVoiceTranscriptTrp('');
+    setVoiceTranscriptMni('');
     setIsRecording(false);
     setRecordingSeconds(0);
     if (voiceRecorderRef.current) {
@@ -86,7 +88,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
     setPhotoUrl(member.photoUrl || '');
     setVoiceAudioUrl(member.voiceAudioUrl || '');
 
-    // Load existing greetings for all 8 languages without deleting or overwriting
+    // Load existing greetings for all 9 languages without deleting or overwriting
     setVoiceTranscriptEn(member.voiceTranscriptEn || member.voiceTranscripts?.en || getFamilyMemberTranscript(member, 'en'));
     setVoiceTranscriptAs(member.voiceTranscriptAs || member.voiceTranscripts?.as || getFamilyMemberTranscript(member, 'as'));
     setVoiceTranscriptBn(member.voiceTranscriptBn || member.voiceTranscripts?.bn || getFamilyMemberTranscript(member, 'bn'));
@@ -95,6 +97,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
     setVoiceTranscriptKha(member.voiceTranscriptKha || member.voiceTranscripts?.kha || getFamilyMemberTranscript(member, 'kha'));
     setVoiceTranscriptNy(member.voiceTranscriptNy || member.voiceTranscripts?.ny || getFamilyMemberTranscript(member, 'ny'));
     setVoiceTranscriptTrp(member.voiceTranscriptTrp || member.voiceTranscripts?.trp || getFamilyMemberTranscript(member, 'trp'));
+    setVoiceTranscriptMni(member.voiceTranscriptMni || member.voiceTranscripts?.mni || getFamilyMemberTranscript(member, 'mni'));
 
     setShowAddModal(true);
   };
@@ -181,6 +184,7 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
     if (voiceTranscriptKha) voiceTranscripts.kha = voiceTranscriptKha;
     if (voiceTranscriptNy) voiceTranscripts.ny = voiceTranscriptNy;
     if (voiceTranscriptTrp) voiceTranscripts.trp = voiceTranscriptTrp;
+    if (voiceTranscriptMni) voiceTranscripts.mni = voiceTranscriptMni;
 
     const savedMember: FamilyMember = {
       ...(editingMember || {}),
@@ -195,10 +199,11 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
       voiceTranscriptAs: voiceTranscriptAs || editingMember?.voiceTranscriptAs || `মই ${name}`,
       voiceTranscriptBn: voiceTranscriptBn || editingMember?.voiceTranscriptBn || `আমি ${name}`,
       voiceTranscriptNe: voiceTranscriptNe || editingMember?.voiceTranscriptNe || `म ${name}`,
-      voiceTranscriptLus: voiceTranscriptLus || editingMember?.voiceTranscriptLus || `चिबाई, ${name} क नी ए!`,
-      voiceTranscriptKha: voiceTranscriptKha || editingMember?.voiceTranscriptKha || `খুবলৈ, ঙা ${name}!`,
-      voiceTranscriptNy: voiceTranscriptNy || editingMember?.voiceTranscriptNy || `अल्बो, ङो ${name}!`,
+      voiceTranscriptLus: voiceTranscriptLus || editingMember?.voiceTranscriptLus || `Chibai, ${name} ka ni e!`,
+      voiceTranscriptKha: voiceTranscriptKha || editingMember?.voiceTranscriptKha || `Khublei, nga dei ${name}!`,
+      voiceTranscriptNy: voiceTranscriptNy || editingMember?.voiceTranscriptNy || `Albo, ngo ${name}!`,
       voiceTranscriptTrp: voiceTranscriptTrp || editingMember?.voiceTranscriptTrp || `খুলুমখা, আং ${name}!`,
+      voiceTranscriptMni: voiceTranscriptMni || editingMember?.voiceTranscriptMni || `ꯈꯨꯔꯨꯝꯖꯔꯤ, ꯑꯩꯍꯥꯛ ${name}ꯅꯤ!`,
       voiceTranscripts,
     };
 
@@ -486,11 +491,11 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
                 )}
               </div>
 
-              {/* Spoken Greetings (All 8 Supported Languages) */}
+              {/* Spoken Greetings (All 9 Supported Languages) */}
               <div className="space-y-3">
                 <div className="border-t border-gray-100 pt-3">
                   <h4 className="text-sm font-bold text-gray-800 mb-0.5">
-                    Spoken Greetings (All 8 Supported Languages)
+                    Spoken Greetings (All 9 Supported Languages)
                   </h4>
                   <p className="text-xs text-gray-500 mb-3">
                     Enter greetings for all supported languages. Familiar Faces and Familiar Voices will play the greeting matching the patient's Preferred Language.
@@ -599,6 +604,19 @@ export const FamilyMembersTab: React.FC<FamilyMembersTabProps> = ({
                       onChange={(e) => setVoiceTranscriptTrp(e.target.value)}
                       className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
                       placeholder="e.g. Pha, ang Sunita!"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Spoken Greeting (Manipuri)
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceTranscriptMni}
+                      onChange={(e) => setVoiceTranscriptMni(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:border-sage-500 outline-none font-medium"
+                      placeholder="e.g. ꯏꯕꯥꯕꯥ, ꯑꯩꯍꯥꯛ ꯁꯨꯅꯤꯇꯥꯅꯤ!"
                     />
                   </div>
                 </div>

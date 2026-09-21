@@ -13,10 +13,11 @@ const DISCLAIMER_MAP: Record<Language, string> = {
   as: "মেমোৰাৰ পৰামৰ্শসমূহ খেলৰ কাৰ্যক্ষমতাৰ ওপৰত আধাৰিত আৰু কেৱল মানসিক সহায়কৰ বাবেহে, চিকিৎসাজনিত নিদান নহয়।",
   bn: "মেমোরার এই অন্তর্দৃষ্টি কার্যকলাপের উপর ভিত্তি করে তৈরি এবং এটি শুধুমাত্র সহায়ক নির্দেশনার জন্য, কোনো চিকিৎসাগত মূল্যায়ন নয়।",
   ne: "मेमोराका यी सिफारिसहरू खेलको गतिविधिको आधारमा सहयोगी मार्गदर्शनका लागि मात्र हुन्, कुनै चिकित्सकीय निदान होइनन्।",
-  lus: "मेमोरा रौतना ही इन्फिअमना अतंङ्गा बुअत्सैह अ नी अ, पुइह्वौम्ना मै अ नी, डॉक्टर एन्कौलना अइअह अ ह्मान थैह लोह।",
-  kha: "কি জিংব্থাহ মেমোরা কি লং তাং বান প্যনশঙাইন, কিম দেই কা জিংসুমার ডক্টর।",
-  ny: "मेमोरा अगन हिए गेन्नम कापे, डॉक्टर कापे मा।",
+  lus: "Memora thurawn hi infiahna atanga buatsaih a ni a, puihthawmna mai a ni, doctor enkawlna aiah a hman theih loh.",
+  kha: "Ki jingbthah Memora ki long tang ban pynshngain, kim dei ka jingsumar doctor.",
+  ny: "Memora agan hie gennam kape, doctor kape ma.",
   trp: "মেমোরানি পরামর্শ সামুং খ্লাইমানি ওপর নির্ভর, অ ডাক্তরনি রিপোর্ট নয়া।",
+  mni: "ꯃꯦꯃꯣꯔꯥꯒꯤ ꯄꯥꯎꯇꯥꯛꯁꯤꯡꯁꯤ ꯁꯥꯟꯅ-ꯈꯣꯠꯅꯕꯗ ꯌꯨꯝꯐꯝ ꯑꯣꯏꯕꯅꯤ, ꯃꯁꯤ ꯂꯥꯌꯦꯡꯕꯒꯤ ꯊꯕꯛ ꯅꯠꯇꯦ (মেমোরাগী পাউতাক)।",
 };
 
 const SKILL_LABELS: Record<CognitiveSkillId, Record<Language, string>> = {
@@ -25,60 +26,66 @@ const SKILL_LABELS: Record<CognitiveSkillId, Record<Language, string>> = {
     as: 'ৰুটিন সোঁৱৰণ',
     bn: 'রুটিন স্মরণ',
     ne: 'दैनिक तालिका स्मरण',
-    lus: 'नीतीन थिल ह्रिअत्छुअह',
-    kha: 'ক্যনমাব য়া কা রুকম ইম',
-    ny: 'रोमर्रोम मित-नाम',
+    lus: 'Nitin thil hriatchhuah',
+    kha: 'Kynmaw ia ka rukom im',
+    ny: 'Romrrom mit-nam',
     trp: 'নিয়ম উয়ানসুমা',
+    mni: 'ꯔꯨꯇꯤꯟ ꯅꯤꯡꯁꯤꯡꯕ (রুটিন নীংশিংবা)',
   },
   recognition: {
     en: 'Familiar Recognition',
     as: 'চিনাকি মুখ আৰু মাত',
     bn: 'পরিচিত মুখ ও কণ্ঠ',
     ne: 'चिनजान पहिचान',
-    lus: 'ह्मेल्ह्रिअत ह्रिअत्फिअहना',
-    kha: 'ইথুহ য়া কিবা ঈইত',
-    ny: 'मोंगो सि-नाम',
+    lus: 'Hmelhriat hriatfiahna',
+    kha: 'Ithuh ia kiba ieid',
+    ny: 'Mongo si-nam',
     trp: 'চিনাকি বরোক সিমা',
+    mni: 'ꯃꯁꯛ ꯈꯪꯗꯣꯛꯄ (মশক খঙদোকপা)',
   },
   associative_memory: {
     en: 'Family Connections',
     as: 'সম্পৰ্ক চিনাক্তকৰণ',
     bn: 'পারিবারিক সম্পর্ক',
     ne: 'पारिवारिक सम्बन्ध',
-    lus: 'च्छुंगकौ इन्लैचिन्न',
-    kha: 'কা জিংইয়াদেই কুর',
-    ny: 'अकम दो-नाम',
+    lus: 'Chhungkaw inlaichinna',
+    kha: 'Ka jingiadei kur',
+    ny: 'Akam do-nam',
     trp: 'নখরোনি সম্পর্ক',
+    mni: 'ꯏꯃꯨꯡꯒꯤ ꯃꯔꯤ (ইমুংগী মরী)',
   },
   problem_solving: {
     en: 'Visual Puzzle Solving',
     as: 'ছবিৰ সাঁথৰ সমাধান',
     bn: 'চিত্র ধাঁধা সমাধান',
     ne: 'तस्विर पजल समाधान',
-    lus: 'थ्लालाक पज़ल च्हींफेल',
-    kha: 'ওয়াদ বুইত য়া কি দুর',
-    ny: 'एलेक पेन्नाम',
+    lus: 'Thlalak puzzle chinfel',
+    kha: 'Wad buit ia ki dur',
+    ny: 'Elek pennam',
     trp: 'ফটোনি পাজল সুংমা',
+    mni: 'ꯐꯣꯇꯣ ꯄꯖꯜ ꯋꯥꯔꯣꯏꯁꯤꯟ (পজল ৱারোইশিন)',
   },
   categorization: {
     en: 'Object Categorization',
     as: 'বস্তুৰ শ্ৰেণী বিভাজন',
     bn: 'বস্তুর শ্রেণিবিভাগ',
     ne: 'वस्तु वर्गीकरण',
-    lus: 'थिल ह्रांग लाकच्छुअह',
-    kha: 'জিয়েদ য়া কিবা ফের',
-    ny: 'आचिंग दो-नाम',
+    lus: 'Thil hrang lakchhuah',
+    kha: 'Jied ia kiba pher',
+    ny: 'Aching do-nam',
     trp: 'জিনিস সিমুং',
+    mni: 'ꯄꯣꯠꯂꯝꯁꯤꯡ ꯈꯥꯏꯗꯣꯛꯄ (পোৎলম খাইদোকপা)',
   },
   visual_spatial: {
     en: 'Shape & Spatial Awareness',
     as: 'আকৃতি চিনাক্তকৰণ',
     bn: 'আকৃতি ও স্থানিক ধারণা',
     ne: 'आकार र स्थान पहिचान',
-    lus: 'ह्मून लेह पिअनह्मंग ह्रिअत्ना',
-    kha: 'কা জিংথেও দুর',
-    ny: 'अपुन सि-नाम',
+    lus: 'Hmun leh pianhmang hriatna',
+    kha: 'Ka jingthew dur',
+    ny: 'Apun si-nam',
     trp: 'আকার তেই জায়া সিমা',
+    mni: 'ꯁꯛꯇꯝ ꯑꯃꯁꯨꯡ ꯃꯐꯝ ꯈꯪꯕ (শকতম খঙবা)',
   },
 };
 
@@ -184,64 +191,64 @@ export class OfflineInsightsService {
 
       case 'lus':
         if (attempts.length === 0) {
-          summary = `${patientName} ताना हा्हदाम थ्लाक ताका बुल तान नान कैलौन १ रौत अ नी।`;
-          reason = `इंटरनेट मामौह लोविन ऑन-डिवाइस AI-इन हीम ताकिन बुल तान थैह नान अ रुअह्मैन अ नी।`;
+          summary = `${patientName} tana hahdam thlak taka bul tan nan level 1 rawt a ni.`;
+          reason = `Internet mamawh lovin on-device AI-in him takin bul tan theih nan a ruahman a ni.`;
         } else if (isPromotion) {
-          summary = `${patientName}-इन ${strongestLabel}-आह थिअमना था तक अ ह्मूह तीर (${strongestScore}%)। ज़ौइ ज़ौइइन कैलौन ${recommendedLevel}-आह च्छोह्तीर अ नी।`;
-          reason = `ऑन-डिवाइस न्यूरल मॉडल-इन कैलौन ${recommendedLevel} (${Math.round(confidence * 100)}% रीन्नगामना) अ थ्लांग अ नी।`;
+          summary = `${patientName}-in ${strongestLabel}-ah thiamna tha tak a hmuh tir (${strongestScore}%). Zawi zawia level ${recommendedLevel}-ah chhohtir a ni.`;
+          reason = `On-device neural model-in level ${recommendedLevel} (${Math.round(confidence * 100)}% rinngamna) a thlang a ni.`;
         } else if (isDemotion) {
-          summary = `रील्रु बुआई अ औम लोह नान औलसम ज़ौकिन कैलौन ${recommendedLevel}-आह दाह अ नी।`;
-          reason = `हाहतक लोवा च्हींफेल थैह नान ऑन-डिवाइस मॉडल-इन कैलौन ${recommendedLevel} अ थ्लांग ए।`;
+          summary = `Rilru buai a awm loh nan awlsam zawkin level ${recommendedLevel}-ah dah a ni.`;
+          reason = `Hahthlak lova chinfel theih nan on-device model-in level ${recommendedLevel} a thlang e.`;
         } else {
-          summary = `${strongestLabel}-आह इन्ह्मन्ना था अ ला नै रेंग (${strongestScore}%)। ${practiceLabel} ज़िर नौन लेह तूरा रौत अ नी।`;
-          reason = `इंटरनेट मामौह लोविन कैलौन ${recommendedLevel} (${Math.round(confidence * 100)}%) थ्लान अ नी।`;
+          summary = `${strongestLabel}-ah inhmanhnathawh tha a la nei reng (${strongestScore}%). ${practiceLabel} zir nawn leh tura rawt a ni.`;
+          reason = `Internet mamawh lovin level ${recommendedLevel} (${Math.round(confidence * 100)}%) thlan a ni.`;
         }
         caregiverSuggestions = [
-          `च्छान्ना पे तूfacedrin ह्मान्ह्मावह तीर लोविन हून पे रौह (हून ह्मान चौहरुअल: ${avgResponseTime}s)।`,
-          'अ दीक लेহ दीक लोহ अइइन अन रील्रु थ्लामुअन्ना गाइহপৌइमौহ ज़ौक रौহ।',
-          'इन्फिअम हून ही च्हुंगकौ थ्लालाक एन एमाव थिंगपुई इन नेन ज़ौम कौप रौহ।',
+          `Chhanna pe turin hmanhmawh tir lovin hun pe rawh (hun hman chawhrual: ${avgResponseTime}s).`,
+          'A dik leh dik loh aiah an rilru thlamuanna ngaihpawimawh zawk rawh.',
+          'Infiam hun hi chhungkaw thlalak en emaw thingpui in nen zawm kawp rawh.',
         ];
         break;
 
       case 'kha':
         if (attempts.length === 0) {
-          summary = `য়া ${patientName} লা প্দিয়াং স্ঙেওভা হা কা জিংপ্যনম্লিয়েন হা কা ক্যরদান ১ বান আই জিংশঙাইন।`;
-          reason = `কা অন-ডিভাইস AI কা লা জিয়েদ য়া কা ক্যরদান কাবা বিয়াং খ্লেম দনকাম ইন্টারনেট।`;
+          summary = `Ia ${patientName} la pdiang sngewbha ha ka jingpynmlien ha ka kyrdan 1 ban ai jingshngain.`;
+          reason = `Ka on-device AI ka la jied ia ka kyrdan kaba biang khlem donkam internet.`;
         } else if (isPromotion) {
-          summary = `${patientName} লা প্যনি য়া কা জিংতবিত হা ${strongestLabel} (${strongestScore}%)। কা জিংপ্যরশাং কা কিয়েও শা কা ক্যরদান ${recommendedLevel}।`;
-          reason = `কা অন-ডিভাইস AI কা লা প্যনবেইত য়া কা ক্যরদান ${recommendedLevel} (${Math.round(confidence * 100)}% জিংথিকনা)।`;
+          summary = `${patientName} la pyni ia ka jingtbit ha ${strongestLabel} (${strongestScore}%). Ka jingpyrshang ka kiew sha ka kyrdan ${recommendedLevel}.`;
+          reason = `Ka on-device AI ka la pynbeit ia ka kyrdan ${recommendedLevel} (${Math.round(confidence * 100)}% jingthikna).`;
         } else if (isDemotion) {
-          summary = `বান ন্যম প্যনশিতম জিংমুত, লা প্যনজেম য়া কা ক্যরদান শা কা ক্যরদান ${recommendedLevel}।`;
-          reason = `কা অন-ডিভাইস AI কা লা প্যনজেম য়া কা ক্যরদান বান আই জিংজেম জিংমুত।`;
+          summary = `Ban nym pynshitom jingmut, la pynjem ia ka kyrdan sha ka kyrdan ${recommendedLevel}.`;
+          reason = `Ka on-device AI ka la pynjem ia ka kyrdan ban ai jingjem jingmut.`;
         } else {
-          summary = `${strongestLabel} কা প্যনি য়া কা জিংত্রেই কাম বা নেহ (${strongestScore}%)। রওত বান ব্তেং হা ${practiceLabel}।`;
-          reason = `খ্লেম দনকাম ইন্টারনেট, কা AI কা জিয়েদ য়া কা ক্যরদান ${recommendedLevel} (${Math.round(confidence * 100)}%)।`;
+          summary = `${strongestLabel} ka pyni ia ka jingtrei kam ba neh (${strongestScore}%). Rawt ban bteng ha ${practiceLabel}.`;
+          reason = `Khlem donkam internet, ka AI ka jied ia ka kyrdan ${recommendedLevel} (${Math.round(confidence * 100)}%).`;
         }
         caregiverSuggestions = [
-          `আই পোর বা পুরা বান জুবাব খ্লেম জিংক্যরকিয়েহ (কা পোর: ${avgResponseTime}s)।`,
-          'প্যনশঙাইন য়া কা জিংমুত হা কা জাকা বান বাতাই য়া কি জিংবাকলা।',
-          'প্যনয়াসোহ য়া কানে কা পোর বাদ কা চা, কি দুর বা ঈইত লানে কি জিংর্বাই জেম।',
+          `Ai por ba pura ban jubab khlem jingkyrkieh (ka por: ${avgResponseTime}s).`,
+          'Pynshngain ia ka jingmut ha ka jaka ban batai ia ki jingbakla.',
+          'Pynyasoh ia kane ka por bad ka cha, ki dur ba ieid lane ki jingrwai jem.',
         ];
         break;
 
       case 'ny':
         if (attempts.length === 0) {
-          summary = `${patientName} नम-लो अल्बो लोंगो शुरू कम, लेवल 1 अगन तेन्नान।`;
-          reason = `ऑफलाइन AI मोंगो दबाव मा शुरू कम तेन्नान।`;
+          summary = `${patientName} nam-lo albo longo shuru kam, level 1 agan tennan.`;
+          reason = `Offline AI mongo dabav ma shuru kam tennan.`;
         } else if (isPromotion) {
-          summary = `${patientName} ${strongestLabel}-लो अल्बो काम ले-का (${strongestScore}%)। लेवल ${recommendedLevel}-लो ककम।`;
-          reason = `ऑफलाइन AI मॉडल लेवल ${recommendedLevel} (${Math.round(confidence * 100)}%) तेन्नान।`;
+          summary = `${patientName} ${strongestLabel}-lo albo kam le-ka (${strongestScore}%). Level ${recommendedLevel}-lo kakam.`;
+          reason = `Offline AI model level ${recommendedLevel} (${Math.round(confidence * 100)}%) tennan.`;
         } else if (isDemotion) {
-          summary = `${patientName} अशांति मा, लेवल ${recommendedLevel}-लो लोंगो कम ले-का।`;
-          reason = `ऑफलाइन AI अल्बो लेवल ${recommendedLevel} तेन्नान।`;
+          summary = `${patientName} ashanti ma, level ${recommendedLevel}-lo longo kam le-ka.`;
+          reason = `Offline AI albo level ${recommendedLevel} tennan.`;
         } else {
-          summary = `${patientName} ${strongestLabel}-लो अल्बो दो-का (${strongestScore}%)। ${practiceLabel} रोमर्रोम कम ले-का।`;
-          reason = `इंटरनेट मा ऑफलाइन मॉडल लेवल ${recommendedLevel} (${Math.round(confidence * 100)}%) तेन्नान।`;
+          summary = `${patientName} ${strongestLabel}-lo albo do-ka (${strongestScore}%). ${practiceLabel} romrrom kam le-ka.`;
+          reason = `Internet ma offline model level ${recommendedLevel} (${Math.round(confidence * 100)}%) tennan.`;
         }
         caregiverSuggestions = [
-          `अगन पेन्नाम समय गो-का (समय: ${avgResponseTime}s)।`,
-          'भूल मा, मोंगो शांति अल्बो ले-का।',
-          'कम समय चा दो बेमिन सुर तात्का।',
+          `Agan pennam samay go-ka (samay: ${avgResponseTime}s).`,
+          'Bhul ma, mongo shanti albo le-ka.',
+          'Kam samay cha do bemin sur tatka.',
         ];
         break;
 
@@ -263,6 +270,27 @@ export class OfflineInsightsService {
           `কক সাকাপ তাড়াহুড়া তা খ্লাই, সময় রিদি (সময়: ${avgResponseTime}s)।`,
           'ভুল না সাফারিখা খাপাংনি শান্তিনো মূল গুরুত্ব রিদি।',
           'সামুংনি সমায়ো চিনাকি ফটো, চা তেই রিমাউই বাই লগে থনদি।',
+        ];
+        break;
+
+      case 'mni':
+        if (attempts.length === 0) {
+          summary = `${patientName}ꯒꯤ ꯅꯨꯡꯉꯥꯏꯅ ꯁꯥꯟꯅ-ꯈꯣꯠꯅꯅꯕ ꯊꯥꯛ ১ ꯄꯥꯎꯇꯥꯛ ꯄꯤꯔꯤ꯫`;
+          reason = `ꯑꯣꯐꯂꯥꯏꯟ AI ꯃꯣꯗꯦꯜꯅ ꯏꯟꯇꯔꯅꯦꯠ ꯌꯥꯎꯗꯅ ꯂꯥꯏꯕ ꯊꯥꯛ ১ ꯈꯟꯒꯠꯂꯦ꯫`;
+        } else if (isPromotion) {
+          summary = `${patientName}ꯅ ${strongestLabel}-ꯗ ꯑꯐꯕ ꯊꯧꯅꯥ ꯎꯠꯂꯦ (${strongestScore}%)꯫ ꯊꯥꯛ ${recommendedLevel}-ꯗ ꯀꯥꯈꯠꯍꯜꯂꯦ꯫`;
+          reason = `ꯑꯣꯐꯂꯥꯏꯟ ꯅꯤꯎꯔꯦꯜ ꯃꯣꯗꯦꯜꯅ ꯍꯧꯖꯤꯛꯀꯤ ꯐꯤꯚꯝ ꯌꯦꯡꯂꯒ ꯊꯥꯛ ${recommendedLevel} (${Math.round(confidence * 100)}% ꯊꯥꯖꯕ) ꯈꯟꯂꯦ꯫`;
+        } else if (isDemotion) {
+          summary = `ꯋꯥꯈꯜ ꯋꯥꯕ ꯍꯟꯊꯍꯟꯅꯕ ꯁꯥꯟꯅꯕꯒꯤ ꯊꯥꯛ ${recommendedLevel}-ꯗ ꯍꯟꯊꯍꯜꯂꯦ꯫`;
+          reason = `ꯑꯣꯐꯂꯥꯏꯟ AI ꯃꯣꯗꯦꯜꯅ ꯅꯨꯡꯉꯥꯏꯕ ꯑꯣꯏꯍꯟꯅꯕ ꯊꯥꯛ ${recommendedLevel} ꯈꯟꯂꯦ꯫`;
+        } else {
+          summary = `${patientName}ꯅ ${strongestLabel}-ꯗ ꯂꯦꯡꯗꯕ ꯊꯧꯅꯥ ꯎꯠꯂꯦ (${strongestScore}%)꯫ ${practiceLabel} ꯆꯥꯡ ꯅꯥꯏꯅ ꯇꯧꯕꯤꯌꯨ꯫`;
+          reason = `ꯏꯟꯇꯔꯅꯦꯠ ꯌꯥꯎꯗꯅ ꯑꯣꯟ-ꯗꯤꯚꯥꯏꯁ ꯃꯣꯗꯦꯜꯅ ꯊꯥꯛ ${recommendedLevel} (${Math.round(confidence * 100)}%) ꯄꯥꯎꯇꯥꯛ ꯄꯤꯔꯤ꯫`;
+        }
+        caregiverSuggestions = [
+          `ꯄꯥꯎꯈꯨꯝ ꯄꯤꯕꯗ ꯈꯔ ꯃꯇꯝ ꯄꯤꯕꯤꯌꯨ (ꯆꯥꯡꯆꯠ ꯃꯇꯝ: ${avgResponseTime}s)꯫`,
+          'ꯑꯁꯣꯏꯕ ꯇꯥꯛꯄꯗꯒꯤ ꯄꯨꯛꯅꯤꯡꯒꯤ ꯅꯨꯡꯉꯥꯏꯕ ꯑꯃꯁꯨꯡ ꯊꯧꯅꯥ ꯄꯤꯕꯕꯨ ꯃꯔꯨꯑꯣꯏꯍꯟꯕꯤꯌꯨ꯫',
+          'ꯁꯥꯟꯅ-ꯈꯣꯠꯅꯕꯒꯤ ꯃꯇꯝ ꯑꯁꯤ ꯏꯃꯨꯡꯒꯤ ꯐꯣꯇꯣ, ꯆꯥ ꯊꯛꯄ ꯅꯠꯇ꯭ꯔꯒ ꯇꯞꯄ ꯏꯁꯩꯒ ꯄꯨꯟꯁꯤꯟꯕꯤꯌꯨ꯫',
         ];
         break;
 

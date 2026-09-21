@@ -7,6 +7,7 @@ import { lus } from './lus';
 import { kha } from './kha';
 import { ny } from './ny';
 import { trp } from './trp';
+import { mni } from './mni';
 import { Language } from '../types';
 
 export type TranslationType = typeof en;
@@ -20,6 +21,7 @@ export const translations: Record<Language, TranslationType> = {
   kha,
   ny,
   trp,
+  mni,
 };
 
 export const getTranslations = (lang: Language): TranslationType => translations[lang] || en;
@@ -38,7 +40,8 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'lus', label: 'Mizo', nativeLabel: 'Mizo ṭawng' },
   { code: 'kha', label: 'Khasi', nativeLabel: 'Ka Ktien Khasi' },
   { code: 'ny', label: 'Nyishi', nativeLabel: 'Nyishi' },
-  { code: 'trp', label: 'Kokborok', nativeLabel: 'Kokborok' },
+  { code: 'trp', label: 'Kokborok', nativeLabel: 'ককবরক (Kokborok)' },
+  { code: 'mni', label: 'Manipuri', nativeLabel: 'ꯃꯤꯇꯩꯂꯣꯟ (মৈতৈলোন্)' },
 ];
 
 interface LanguageContextType {
@@ -54,7 +57,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('memora_language') as Language | null;
-    const valid: Language[] = ['en', 'as', 'bn', 'ne', 'lus', 'kha', 'ny', 'trp'];
+    const valid: Language[] = ['en', 'as', 'bn', 'ne', 'lus', 'kha', 'ny', 'trp', 'mni'];
     return saved && valid.includes(saved) ? saved : 'as'; // Default to Assamese for Assam region
   });
 

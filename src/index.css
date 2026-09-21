@@ -4,19 +4,29 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', 'Noto Sans Meetei Mayek', sans-serif;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Assamese & Bengali Eastern Nagari text styling */
-  [lang="as"], [lang="bn"], .font-assamese, .font-bengali {
+  /* Assamese, Bengali & Kokborok Eastern Nagari / Bengali script text styling */
+  [lang="as"], [lang="bn"], [lang="trp"], .font-assamese, .font-bengali, .font-kokborok {
     font-family: 'Noto Sans Bengali', 'Noto Serif Bengali', 'Vrinda', 'Kalpurush', 'SolaimanLipi', system-ui, sans-serif;
   }
 
   /* Nepali Devanagari text styling */
   [lang="ne"], .font-nepali {
     font-family: 'Noto Sans Devanagari', 'Mangal', 'Kokila', system-ui, sans-serif;
+  }
+
+  /* Mizo, Khasi & Nyishi Latin text styling */
+  [lang="lus"], [lang="kha"], [lang="ny"], .font-latin {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Manipuri Meetei Mayek text styling with Bengali-Assamese alternate script representation */
+  [lang="mni"], .font-manipuri {
+    font-family: 'Noto Sans Meetei Mayek', 'Noto Sans Bengali', system-ui, sans-serif;
   }
 }
 

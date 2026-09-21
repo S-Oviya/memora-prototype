@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Heart, ChevronDown, ChevronUp, ShieldAlert, Sparkles, MessageCircle, CalendarCheck, ShieldCheck, Sun, Lightbulb, RefreshCw } from 'lucide-react';
-import { getTranslations } from '../../locales/LanguageContext';
+import { useLanguage } from '../../locales/LanguageContext';
 import {
   CAREGIVER_GUIDANCE_TIPS,
   getGuidanceTipCategory,
@@ -23,10 +23,11 @@ const STAT_LABELS: Record<Language, { strongArea: string; focusArea: string; tar
   as: { strongArea: 'দক্ষতা', focusArea: 'অনুশীলন', targetLevel: 'নিৰ্দেশিত স্তৰ' },
   bn: { strongArea: 'দক্ষতা', focusArea: 'অনুশীলনের ক্ষেত্র', targetLevel: 'লক্ষ্য মাত্রা' },
   ne: { strongArea: 'सबल पक्ष', focusArea: 'अभ्यास क्षेत्र', targetLevel: 'लक्षित स्तर' },
-  lus: { strongArea: 'थिअम जौंग', focusArea: 'ज़िर गै', targetLevel: 'तूम राम कैलौन' },
-  kha: { strongArea: 'কা বোর বা খ্লাইন', focusArea: 'কা জাকা প্যনলেইত জিংমুত', targetLevel: 'কা ক্যরদান বা থমু' },
-  ny: { strongArea: 'अल्बो लोंगो', focusArea: 'अचिंग लोंगो', targetLevel: 'तेन्नान लोंगो' },
+  lus: { strongArea: 'Thiam zawng', focusArea: 'Zir ngai', targetLevel: 'Tum ram kaihhnawh' },
+  kha: { strongArea: 'Ka bor ba khlain', focusArea: 'Ka jaka pynleit jingmut', targetLevel: 'Ka kyrdan ba thmu' },
+  ny: { strongArea: 'Albo longo', focusArea: 'Aching longo', targetLevel: 'Tennan longo' },
   trp: { strongArea: 'কাহাম জায়া', focusArea: 'সামুং নাইমানি', targetLevel: 'লক্ষ্য মাত্রা' },
+  mni: { strongArea: 'ꯍꯩꯊꯣꯏꯕ (মপাঙ্গল)', focusArea: 'ꯇꯝꯐꯝ (অনৌবা লম)', targetLevel: 'ꯊꯥꯛ (লমজিংবা)' },
 };
 
 const PERSONALIZED_INSIGHT_TITLES: Record<Language, string> = {
@@ -34,16 +35,18 @@ const PERSONALIZED_INSIGHT_TITLES: Record<Language, string> = {
   as: 'ব্যক্তিগত কাৰ্যসূচী আৰু পৰামৰ্শ',
   bn: 'ব্যক্তিগত কার্যকলাপ ও অন্তর্দৃষ্টি',
   ne: 'व्यक्तिगत गतिविधि तथा परामर्श',
-  lus: 'मीलैम ताना रौतना लेह ज़ीर्तीर्ना',
-  kha: 'কা জিংব্থাহ বা লা প্যনখ্রেহ বা ক্যরপাং',
-  ny: 'अकम गेन्नम अगन',
+  lus: 'Mimal tana rawtna leh zirtirna',
+  kha: 'Ka jingbthah ba la pynkhreh kyrpang',
+  ny: 'Akam gennam agan',
   trp: 'বোরোকনি বাগৈ বিশেষ পরামর্শ',
+  mni: 'ꯑꯈꯟꯅꯕ ꯄꯥꯎꯇꯥꯛ ꯑꯃꯁꯨꯡ ꯂꯝꯖꯤꯡꯕ (অখন্নবা পাউতাক)',
 };
 
 export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   patient,
   attempts,
 }) => {
+  const { language: caregiverLanguage, t: currentT } = useLanguage();
   const [expandedId, setExpandedId] = useState<string | null>('tip-1');
   const [patientData, setPatientData] = useState<Patient>(() => {
     const fromDb = db.getPatient();
@@ -73,24 +76,18 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   // Read latest directly from DB as ultimate source of truth, then state, then prop
   const latestDbPatient = db.getPatient();
   const resolvedPatient = latestDbPatient || patientData || patient;
-  // Patient preferredLanguage has absolute priority over caregiver UI language
-  const preferredLanguage: Language = (
-    latestDbPatient?.preferredLanguage ||
-    patientData?.preferredLanguage ||
-    patient?.preferredLanguage ||
-    'as'
-  ) as Language;
+  // Caregiver's currently selected language is the source of truth for Guidance
+  const guidanceLanguage: Language = caregiverLanguage || 'en';
   const resolvedAttempts = attempts || db.getGameAttempts();
-  const currentT = getTranslations(preferredLanguage);
 
-  // Synchronously compute offline insights strictly using the patient's preferred language
+  // Synchronously compute offline insights strictly using the caregiver's selected language
   const aiInsight: AICaregiverInsightResult = useMemo(() => {
     return OfflineInsightsService.generateOfflineInsights(
       resolvedPatient?.name || 'the senior',
       resolvedAttempts,
-      preferredLanguage
+      guidanceLanguage
     );
-  }, [preferredLanguage, resolvedPatient?.name, resolvedAttempts]);
+  }, [guidanceLanguage, resolvedPatient?.name, resolvedAttempts]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -110,7 +107,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" lang={guidanceLanguage}>
       {/* Top Banner */}
       <div className="bg-white p-6 rounded-3xl border-2 border-sage-100 shadow-sm">
         <div className="flex items-center gap-3 text-sage-800 mb-2">
@@ -145,7 +142,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
                   {currentT.caregiver.guidance.aiInsightTitle}
                 </span>
                 <h3 className="text-lg font-black text-gray-900">
-                  {PERSONALIZED_INSIGHT_TITLES[preferredLanguage] || PERSONALIZED_INSIGHT_TITLES.en}
+                  {PERSONALIZED_INSIGHT_TITLES[guidanceLanguage] || PERSONALIZED_INSIGHT_TITLES.en}
                 </h3>
               </div>
             </div>
@@ -161,7 +158,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
             <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100">
               <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                {STAT_LABELS[preferredLanguage]?.strongArea || STAT_LABELS.en.strongArea}
+                {STAT_LABELS[guidanceLanguage]?.strongArea || STAT_LABELS.en.strongArea}
               </span>
               <span className="text-xs font-extrabold text-indigo-950">
                 {aiInsight.strongestArea}
@@ -169,7 +166,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
             </div>
             <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100">
               <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                {STAT_LABELS[preferredLanguage]?.focusArea || STAT_LABELS.en.focusArea}
+                {STAT_LABELS[guidanceLanguage]?.focusArea || STAT_LABELS.en.focusArea}
               </span>
               <span className="text-xs font-extrabold text-amber-900">
                 {aiInsight.practiceArea}
@@ -177,7 +174,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
             </div>
             <div className="bg-white/80 p-2.5 rounded-xl border border-indigo-100 col-span-2 sm:col-span-1">
               <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                {STAT_LABELS[preferredLanguage]?.targetLevel || STAT_LABELS.en.targetLevel}
+                {STAT_LABELS[guidanceLanguage]?.targetLevel || STAT_LABELS.en.targetLevel}
               </span>
               <span className="text-xs font-extrabold text-sage-800">
                 {currentT.patient.level} {aiInsight.recommendedLevel} ({Math.round(aiInsight.confidence * 100)}%)
@@ -217,10 +214,10 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
       <div className="space-y-4">
         {CAREGIVER_GUIDANCE_TIPS.map((tip) => {
           const isExpanded = expandedId === tip.id;
-          const title = getGuidanceTipTitle(tip, preferredLanguage);
-          const category = getGuidanceTipCategory(tip, preferredLanguage);
-          const summary = getGuidanceTipSummary(tip, preferredLanguage);
-          const bullets = getGuidanceTipBullets(tip, preferredLanguage);
+          const title = getGuidanceTipTitle(tip, guidanceLanguage);
+          const category = getGuidanceTipCategory(tip, guidanceLanguage);
+          const summary = getGuidanceTipSummary(tip, guidanceLanguage);
+          const bullets = getGuidanceTipBullets(tip, guidanceLanguage);
 
           return (
             <div

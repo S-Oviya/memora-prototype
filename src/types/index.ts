@@ -1,7 +1,7 @@
 export type UserRole = 'caregiver' | 'patient';
 
-// Eight supported languages
-export type Language = 'en' | 'as' | 'bn' | 'ne' | 'lus' | 'kha' | 'ny' | 'trp';
+// Nine supported languages
+export type Language = 'en' | 'as' | 'bn' | 'ne' | 'lus' | 'kha' | 'ny' | 'trp' | 'mni';
 
 export type DementiaStage = 'early' | 'mild' | 'moderate' | 'advanced';
 
@@ -33,6 +33,7 @@ export interface FamilyMember {
   voiceTranscriptKha?: string;
   voiceTranscriptNy?: string;
   voiceTranscriptTrp?: string;
+  voiceTranscriptMni?: string;
   voiceTranscripts?: Partial<Record<Language, string>>;
   notes?: string;
 }
@@ -50,6 +51,28 @@ export interface RoutineItem {
   photoUrl?: string;
   completed?: boolean;
   order: number;
+}
+
+export type ReminderType = 'medicine' | 'hydration' | 'activity' | 'appointment';
+
+export interface ReminderItem {
+  id: string;
+  patientId: string;
+  title: string;
+  titleEn?: string;
+  titleAs?: string;
+  titles?: Partial<Record<Language, string>>;
+  type: ReminderType;
+  time: string; // e.g. "09:00 AM" or ISO string or time representation
+  schedule?: string; // e.g. "Daily", "Every 2 Hours", "Weekly", "Specific Date"
+  notes?: string;
+  notesEn?: string;
+  notesAs?: string;
+  notesLang?: Partial<Record<Language, string>>;
+  enabled: boolean;
+  completedToday?: boolean;
+  lastAcknowledgedAt?: string;
+  createdAt?: string;
 }
 
 export interface FavoriteMusic {
@@ -179,6 +202,7 @@ export interface CaregiverGuidanceTip {
   titleKha?: string;
   titleNy?: string;
   titleTrp?: string;
+  titleMni?: string;
   categoryEn: string;
   categoryAs: string;
   categoryBn?: string;
@@ -187,6 +211,7 @@ export interface CaregiverGuidanceTip {
   categoryKha?: string;
   categoryNy?: string;
   categoryTrp?: string;
+  categoryMni?: string;
   summaryEn: string;
   summaryAs: string;
   summaryBn?: string;
@@ -195,6 +220,7 @@ export interface CaregiverGuidanceTip {
   summaryKha?: string;
   summaryNy?: string;
   summaryTrp?: string;
+  summaryMni?: string;
   bulletPointsEn: string[];
   bulletPointsAs: string[];
   bulletPointsBn?: string[];
@@ -203,6 +229,7 @@ export interface CaregiverGuidanceTip {
   bulletPointsKha?: string[];
   bulletPointsNy?: string[];
   bulletPointsTrp?: string[];
+  bulletPointsMni?: string[];
   titles?: Partial<Record<Language, string>>;
   categories?: Partial<Record<Language, string>>;
   summaries?: Partial<Record<Language, string>>;
