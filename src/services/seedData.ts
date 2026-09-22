@@ -1,4 +1,4 @@
-import { Patient, FamilyMember, RoutineItem, ReminderItem, FavoriteMusic, CaregiverGuidanceTip, Language } from '../types';
+import { Patient, FamilyMember, RoutineItem, ReminderItem, FavoriteMusic, CaregiverGuidanceTip, Language, CaregiverAlert } from '../types';
 
 // Dementia-friendly SVG avatars for family members
 export const createAvatarSvg = (name: string, role: string, bgColor: string, hairColor: string, detailColor: string) => {
@@ -484,6 +484,240 @@ export const getReminderNotes = (item: ReminderItem, lang: Language): string => 
   if (lang === 'en') return item.notesEn || item.notes || '';
   if (lang === 'as') return item.notesAs || item.notesEn || item.notes || '';
   return item.notes || item.notesEn || item.notesAs || '';
+};
+
+export const INITIAL_ALERTS: CaregiverAlert[] = [
+  {
+    id: 'alert-1-medicine',
+    patientId: 'patient-ramesh-1',
+    patientName: 'Ramesh Chandra Baruah',
+    type: 'missed_medicine',
+    severity: 'high',
+    status: 'unread',
+    title: 'Missed Morning Medicine: Donepezil (5mg)',
+    titleEn: 'Missed Morning Medicine: Donepezil (5mg)',
+    titleAs: 'পুৱাৰ ঔষধ খাবলৈ বাকী: ডনেপেজিল (৫ মি.গ্ৰা.)',
+    description: 'Patient did not acknowledge the 09:00 AM medication prompt on the patient tablet.',
+    descriptionEn: 'Patient did not acknowledge the 09:00 AM medication prompt on the patient tablet.',
+    descriptionAs: 'ৰোগীয়ে টেবলেটত পুৱা ৯:০০ বজাৰ ঔষধৰ জাননী নিশ্চিত কৰা নাই।',
+    relevantItemTitle: 'Morning Blood Pressure & Memory Medicine',
+    relevantItemId: 'rem-1-medicine',
+    dueTime: '09:00 AM',
+    timestamp: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+  },
+  {
+    id: 'alert-2-hydration',
+    patientId: 'patient-ramesh-1',
+    patientName: 'Ramesh Chandra Baruah',
+    type: 'missed_hydration',
+    severity: 'medium',
+    status: 'unread',
+    title: 'Missed Hydration Reminder',
+    titleEn: 'Missed Hydration Reminder',
+    titleAs: 'পানী খোৱাৰ সময় পাৰ হ’ল',
+    description: 'Scheduled 11:00 AM hydration reminder has not been confirmed. Please offer a fresh glass of water.',
+    descriptionEn: 'Scheduled 11:00 AM hydration reminder has not been confirmed. Please offer a fresh glass of water.',
+    descriptionAs: '১১:০০ বজাৰ পানী খোৱাৰ সোঁৱৰণি নিশ্চিত হোৱা নাই। অনুগ্ৰহ কৰি কুহুমীয়া পানী খাবলৈ দিয়ক।',
+    relevantItemTitle: 'Drink a Glass of Fresh Water',
+    relevantItemId: 'rem-2-hydration',
+    dueTime: '11:00 AM',
+    timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'alert-3-activity',
+    patientId: 'patient-ramesh-1',
+    patientName: 'Ramesh Chandra Baruah',
+    type: 'missed_activity',
+    severity: 'low',
+    status: 'read',
+    title: 'Scheduled Daily Activity Pending',
+    titleEn: 'Scheduled Daily Activity Pending',
+    titleAs: 'দৈনন্দিন কাৰ্যসূচী বাকী',
+    description: 'Afternoon veranda walk scheduled for 04:30 PM yesterday was not recorded.',
+    descriptionEn: 'Afternoon veranda walk scheduled for 04:30 PM yesterday was not recorded.',
+    descriptionAs: 'আবেলি ৪:৩০ বজাৰ বাৰান্দাৰ খোজ কঢ়াৰ কাৰ্যসূচী সম্পূৰ্ণ কৰা বুলি পঞ্জীয়ন হোৱা নাই।',
+    relevantItemTitle: 'Veranda Walk & Garden Fresh Air',
+    relevantItemId: 'rem-3-activity',
+    dueTime: '04:30 PM',
+    timestamp: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
+    readAt: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
+  },
+  {
+    id: 'alert-4-appointment',
+    patientId: 'patient-ramesh-1',
+    patientName: 'Ramesh Chandra Baruah',
+    type: 'missed_appointment',
+    severity: 'high',
+    status: 'unread',
+    title: 'Medical Appointment Check-in Due',
+    titleEn: 'Medical Appointment Check-in Due',
+    titleAs: 'চিকিৎসকৰ পৰামৰ্শৰ সময় উপস্থিত',
+    description: 'Upcoming monthly neurology follow-up check-in at Apollo Clinic requires caregiver attention.',
+    descriptionEn: 'Upcoming monthly neurology follow-up check-in at Apollo Clinic requires caregiver attention.',
+    descriptionAs: 'গৌহাটী এপোলো ক্লিনিকত ডাঃ বি. শৰ্মাৰ সৈতে মাহেকীয়া পৰামৰ্শৰ বাবে প্ৰস্তুতি চাব লাগে।',
+    relevantItemTitle: 'Neurology Review with Dr. B. Sharma',
+    relevantItemId: 'rem-4-appointment',
+    dueTime: '11:30 AM',
+    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'alert-5-inactivity',
+    patientId: 'patient-ramesh-1',
+    patientName: 'Ramesh Chandra Baruah',
+    type: 'inactivity',
+    severity: 'medium',
+    status: 'resolved',
+    title: 'Inactivity Notice: No Engagement in 14 Hours',
+    titleEn: 'Inactivity Notice: No Engagement in 14 Hours',
+    titleAs: 'সক্ৰিয়তাহীনতাৰ জাননী: ১৪ ঘণ্টা ধৰি কোনো কাৰ্যসূচী হোৱা নাই',
+    description: 'No cognitive games or routine actions were logged during the overnight-to-morning interval.',
+    descriptionEn: 'No cognitive games or routine actions were logged during the overnight-to-morning interval.',
+    descriptionAs: 'ৰাতিপুৱাৰ সময়ছোৱাত কোনো জ্ঞানমূলক খেল বা নিয়মীয়া কাৰ্যসূচী পঞ্জীয়ন হোৱা নাছিল।',
+    relevantItemTitle: 'Cognitive Activity & Daily Engagement',
+    dueTime: 'Continuous Monitoring',
+    timestamp: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
+    resolvedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+  },
+];
+
+export const ALERT_TITLE_TRANSLATIONS: Record<string, Record<Language, string>> = {
+  'alert-1-medicine': {
+    en: 'Missed Morning Medicine: Donepezil (5mg)',
+    as: 'পুৱাৰ ঔষধ খাবলৈ বাকী: ডনেপেজিল (৫ মি.গ্ৰা.)',
+    bn: 'সকালের ওষুধ বাকি: ডনেপেজিল (৫ মিগ্রা)',
+    ne: 'बिहानको औषधि बाँकी: डोनेपेजिल (५ मिग्रा)',
+    lus: 'Zing Damdawi eih loh: Donepezil (5mg)',
+    kha: 'Ka dawai step khlem bam: Donepezil (5mg)',
+    ny: 'Romrrom si-nam khlem do: Donepezil (5mg)',
+    trp: 'ফুংনি সমাই জাগ্ৰি: ডনেপেজিল (৫ মিগ্রা)',
+    mni: 'ꯑꯌꯨꯛꯀꯤ ꯍꯤꯗꯥꯛ ꯆꯥꯗ꯭ꯔꯤ: ꯗꯣꯅꯦꯄꯦꯖꯤꯜ (৫mg)',
+  },
+  'alert-2-hydration': {
+    en: 'Missed Hydration Reminder',
+    as: 'পানী খোৱাৰ সময় পাৰ হ’ল',
+    bn: 'পানি পানের সময় পার হয়েছে',
+    ne: 'पानी पिउने समय छुटेको छ',
+    lus: 'Tui in theihnghilh hriattirna',
+    kha: 'Klet ban dih um',
+    ny: 'Asi in-nam klet',
+    trp: 'তৈ নুংমা জাগ্ৰি',
+    mni: 'ꯏꯁꯤꯡ ꯊꯛꯄꯒꯤ ꯃꯇꯝ ꯂꯥꯟꯊꯣꯛꯈ꯭ꯔꯦ',
+  },
+  'alert-3-activity': {
+    en: 'Scheduled Daily Activity Pending',
+    as: 'দৈনন্দিন কাৰ্যসূচী বাকী',
+    bn: 'দৈনন্দিন কাজ সম্পন্ন হয়নি',
+    ne: 'दैनिक गतिविधि बाँकी छ',
+    lus: 'Ni tin thiltih hun kian',
+    kha: 'Ka kam sngi khlem leh',
+    ny: 'Kari lang-nam do-nam',
+    trp: 'সান সাননি সানজাং জাগ্ৰি',
+    mni: 'ꯅꯨꯃꯤꯠ ꯈꯨꯗꯤꯡꯒꯤ ꯊꯕꯛ ꯂꯣꯏꯗ꯭ꯔꯤ',
+  },
+  'alert-4-appointment': {
+    en: 'Medical Appointment Check-in Due',
+    as: 'চিকিৎসকৰ পৰামৰ্শৰ সময় উপস্থিত',
+    bn: 'ডাক্তারের সাথে সাক্ষাতের সময় উপস্থিত',
+    ne: 'चिकित्सक भेट्ने समय भयो',
+    lus: 'Doctor hmuh hun a thleng',
+    kha: 'Ka por iakynduh doktor',
+    ny: 'Doctor klam-nam por',
+    trp: 'ডাক্তারনি লগ অমুক সান',
+    mni: 'ꯗꯣꯛꯇꯔ ꯎꯅꯕꯒꯤ ꯃꯇꯝ ꯌꯧꯔꯛꯂꯦ',
+  },
+  'alert-5-inactivity': {
+    en: 'Inactivity Notice: No Engagement in 14 Hours',
+    as: 'সক্ৰিয়তাহীনতাৰ জাননী: ১৪ ঘণ্টা ধৰি কোনো কাৰ্যসূচী হোৱা নাই',
+    bn: 'নিষ্ক্রিয়তার বিজ্ঞপ্তি: ১৪ ঘণ্টা ধরে কোনো কাজ নেই',
+    ne: 'निष्क्रियता सूचना: १४ घण्टादेखि कुनै गतिविधि छैन',
+    lus: 'Thiltih awm loh hriattirna: Darkar 14 chhung',
+    kha: 'Jingtip bym don kam: 14 kynta',
+    ny: 'Kari lang-nam ho-ma: 14 hours',
+    trp: 'কালাংমা খৗবৗর: ১৪ ঘণ্টা কাইচৗং জাগ্ৰি',
+    mni: 'ꯊꯕꯛ ꯂꯩꯇꯕꯒꯤ ꯄꯥꯎ: ꯄꯨꯡ ১৪ ꯆꯠꯊꯣꯛ-ꯆꯠꯁꯤꯟ ꯂꯩꯇꯦ',
+  },
+};
+
+export const ALERT_DESC_TRANSLATIONS: Record<string, Record<Language, string>> = {
+  'alert-1-medicine': {
+    en: 'Patient did not acknowledge the 09:00 AM medication prompt on the patient tablet.',
+    as: 'ৰোগীয়ে টেবলেটত পুৱা ৯:০০ বজাৰ ঔষধৰ জাননী নিশ্চিত কৰা নাই।',
+    bn: 'রোগী ট্যাবলেটে সকাল ৯:০০ টার ওষুধের রিমাইন্ডার নিশ্চিত করেননি।',
+    ne: 'बिरामीले बिहान ९:०० बजेको औषधिको सूचना पुष्टि गर्नुभएको छैन।',
+    lus: 'Patient-in zing dar 9:00 damdawi hriattirna a la chhang lo.',
+    kha: 'U nongpang um pat pynshisha ia ka dawai 9:00 step.',
+    ny: 'Patient romrrom 9:00 si-nam confirm ho-ma.',
+    trp: 'রোগী ৯:০০ ফুংনি সমাই খাপারানি সাক নিশ্চিত খলিয়াই।',
+    mni: 'ꯄꯦꯁꯦꯟꯇꯅꯥ ꯑꯌꯨꯛ ꯄꯨꯡ ৯:০০ ꯒꯤ ꯍꯤꯗꯥꯛ ꯆꯥꯕꯒꯤ ꯄꯥꯎ ꯌꯥꯗ꯭ꯔꯤ꯫',
+  },
+  'alert-2-hydration': {
+    en: 'Scheduled 11:00 AM hydration reminder has not been confirmed. Please offer a fresh glass of water.',
+    as: '১১:০০ বজাৰ পানী খোৱাৰ সোঁৱৰণি নিশ্চিত হোৱা নাই। অনুগ্ৰহ কৰি কুহুমীয়া পানী খাবলৈ দিয়ক।',
+    bn: 'বেলা ১১:০০ টার পানি পানের রিমাইন্ডার নিশ্চিত হয়নি। দয়া করে এক গ্লাস পানি দিন।',
+    ne: 'बिहान ११:०० बजे पानी पिउने सूचना पुष्टि भएको छैन। कृपया पानी दिनुहोस्।',
+    lus: 'Dar 11:00 tui in hriattirna la chhan a ni lo. Tui in tir rawh.',
+    kha: 'Um pat pynshisha ban dih um 11:00. Ai um dih ia u.',
+    ny: '11:00 asi in-nam confirm ho-ma. Asi binam le.',
+    trp: '১১:০০ ফুংনি তৈ নুংমা নিশ্চিত খলিয়াই। তৈ নুংরদি।',
+    mni: 'ꯅꯨꯃꯤꯗꯥꯡꯋꯥꯏ ꯄꯨꯡ ১১:০০ ꯒꯤ ꯏꯁꯤꯡ ꯊꯛꯄꯥ ꯂꯣꯏꯗ꯭ꯔꯤ꯫ ꯏꯁꯤꯡ ꯄꯤꯕꯤꯌꯨ꯫',
+  },
+  'alert-3-activity': {
+    en: 'Afternoon veranda walk scheduled for 04:30 PM yesterday was not recorded.',
+    as: 'আবেলি ৪:৩০ বজাৰ বাৰান্দাৰ খোজ কঢ়াৰ কাৰ্যসূচী সম্পূৰ্ণ কৰা বুলি পঞ্জীয়ন হোৱা নাই।',
+    bn: 'গতকাল বিকেল ৪:৩০ টার বারান্দায় হাঁটার সময় রেকর্ড করা হয়নি।',
+    ne: 'हिजो दिउँसो ४:३० बजेको हिंड्ने समय रेकर्ड भएको छैन।',
+    lus: 'Nimah dar 4:30 chawhnu lenkual thiltih ziah a ni lo.',
+    kha: 'Ka jingshang ha veranda 4:30 janmiet ym shym la thoh.',
+    ny: 'Veranda walk 4:30 record ho-ma.',
+    trp: 'বাৰান্দাত খোজ কঢ়া ৪:৩০ রেকর্ড খলিয়াই।',
+    mni: 'ꯉꯔꯥꯡ ꯅꯨꯃꯤꯗꯥꯡ ꯄꯨꯡ ৪:৩০ ꯒꯤ ꯆꯠꯄꯥ ꯊꯕꯛ ꯔꯦꯀꯣꯔ꯭ꯗ ꯇꯧꯗꯦ꯫',
+  },
+  'alert-4-appointment': {
+    en: 'Upcoming monthly neurology follow-up check-in at Apollo Clinic requires caregiver attention.',
+    as: 'গৌহাটী এপোলো ক্লিনিকত ডাঃ বি. শৰ্মাৰ সৈতে মাহেকীয়া পৰামৰ্শৰ বাবে প্ৰস্তুতি চাব লাগে।',
+    bn: 'অ্যাপোলো ক্লিনিকে মাসিক নিউরোলজি ফলো-আপের জন্য প্রস্তুতি প্রয়োজন।',
+    ne: 'अपोलो क्लिनिकमा मासिक न्युरोलोजी जाँचका लागि तयारी आवश्यक छ।',
+    lus: 'Apollo Clinic a neurology in check-up tura inbuatsaih a ngai.',
+    kha: 'Donkam ban khreh ban leit sha Apollo Clinic ban iakynduh doktor.',
+    ny: 'Apollo Clinic neurology check-up le preparation do.',
+    trp: 'অ্যাপোলো ক্লিনিকত ডাক্তারনি সানজাং প্রস্তুতি নাংগো।',
+    mni: 'ꯑꯦꯄꯣꯂꯣ ꯀ꯭ꯂꯤꯅꯤꯛꯇꯥ ꯗꯣꯛꯇꯔ ꯎꯅꯅꯕꯥ ꯀꯦꯌꯔꯒꯤꯚꯔꯅꯥ ꯁꯦꯝ-ꯁꯥꯕꯥ ꯃꯊꯧ ꯇꯥꯏ꯫',
+  },
+  'alert-5-inactivity': {
+    en: 'No cognitive games or routine actions were logged during the overnight-to-morning interval.',
+    as: 'ৰাতিপুৱাৰ সময়ছোৱাত কোনো জ্ঞানমূলক খেল বা নিয়মীয়া কাৰ্যসূচী পঞ্জীয়ন হোৱা নাছিল।',
+    bn: 'রাত থেকে সকালের মধ্যে কোনো গেম বা রুটিন কাজ রেকর্ড করা হয়নি।',
+    ne: 'रातदेखि बिहानसम्म कुनै खेल वा दैनिक काम रेकर्ड गरिएको छैन।',
+    lus: 'Zan aṭanga zing thleng thiltih emaw infiamna engmah ziah a ni lo.',
+    kha: 'Ym don ba ialehkai ne leh kam naduh miet haduh step.',
+    ny: 'Game do routine activity lang-nam ho-ma.',
+    trp: 'হরনি সিম ফুং পর্যন্ত কাইচৗং জাগ্ৰি।',
+    mni: 'ꯑꯍꯤꯡꯗꯒꯤ ꯑꯌꯨꯛ ꯐꯥꯎꯕꯗꯥ ꯑꯃꯇꯥ ꯒꯦꯝ ꯁꯥꯅꯕꯥ ꯅꯠꯇ꯭ꯔꯒ ꯊꯕꯛ ꯂꯩꯇꯦ꯫',
+  },
+};
+
+export const getAlertTitle = (alert: CaregiverAlert, lang: Language): string => {
+  if (alert.id && ALERT_TITLE_TRANSLATIONS[alert.id]?.[lang]) {
+    return ALERT_TITLE_TRANSLATIONS[alert.id][lang];
+  }
+  if (alert.titles?.[lang]) {
+    return alert.titles[lang]!;
+  }
+  if (lang === 'en') return alert.titleEn || alert.title;
+  if (lang === 'as') return alert.titleAs || alert.titleEn || alert.title;
+  return alert.titleEn || alert.title || alert.titleAs || '';
+};
+
+export const getAlertDescription = (alert: CaregiverAlert, lang: Language): string => {
+  if (alert.id && ALERT_DESC_TRANSLATIONS[alert.id]?.[lang]) {
+    return ALERT_DESC_TRANSLATIONS[alert.id][lang];
+  }
+  if (alert.descriptions?.[lang]) {
+    return alert.descriptions[lang]!;
+  }
+  if (lang === 'en') return alert.descriptionEn || alert.description || '';
+  if (lang === 'as') return alert.descriptionAs || alert.descriptionEn || alert.description || '';
+  return alert.description || alert.descriptionEn || alert.descriptionAs || '';
 };
 
 export interface FamilyMemberLanguageData {

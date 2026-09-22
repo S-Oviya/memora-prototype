@@ -1,17 +1,22 @@
 import React from 'react';
-import { Sparkles, Play, Star } from 'lucide-react';
+import { Sparkles, Play, Star, Bell, Pill, Droplets, Stethoscope, Activity as ActivityIcon, CheckCircle2, Clock, Heart, Check } from 'lucide-react';
 import { useLanguage } from '../../locales/LanguageContext';
-import { Patient, GameId } from '../../types';
+import { Patient, GameId, ReminderItem, ReminderType } from '../../types';
+import { getReminderTitle, getReminderNotes } from '../../services/seedData';
 import { AccessibleButton } from '../common/AccessibleButton';
 
 interface PatientHomeProps {
   patient: Patient;
+  reminders?: ReminderItem[];
+  onToggleReminderCompleted?: (id: string) => void;
   onSelectGame: (gameId: GameId) => void;
   recommendedGame: GameId;
 }
 
 export const PatientHome: React.FC<PatientHomeProps> = ({
   patient,
+  reminders = [],
+  onToggleReminderCompleted,
   onSelectGame,
   recommendedGame,
 }) => {
@@ -100,6 +105,135 @@ export const PatientHome: React.FC<PatientHomeProps> = ({
           {t.patient.welcomeSub}
         </p>
       </div>
+
+      {/* Gentle Due/Upcoming Reminders Section for Senior Patient */}
+      {reminders.filter((r) => r.enabled).length > 0 && (
+        <div className="w-full mb-8">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border-3 border-sage-200 shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-sage-100 text-sage-800 flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-sage-700" />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-sage-950">
+                    {t.patient.reminders.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                    {t.patient.reminders.subtitle}
+                  </p>
+                </div>
+              </div>
+
+              {reminders.filter((r) => r.enabled && r.completedToday).length ===
+                reminders.filter((r) => r.enabled).length && (
+                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{t.patient.reminders.completed}</span>
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {reminders
+                .filter((r) => r.enabled)
+                .map((rem) => {
+                  const title = getReminderTitle(rem, language);
+                  const notes = getReminderNotes(rem, language);
+
+                  const getPatientIcon = (type: ReminderType) => {
+                    switch (type) {
+                      case 'medicine':
+                        return <Pill className="w-6 h-6 text-rose-600" />;
+                      case 'hydration':
+                        return <Droplets className="w-6 h-6 text-sky-600" />;
+                      case 'activity':
+                        return <ActivityIcon className="w-6 h-6 text-emerald-600" />;
+                      case 'appointment':
+                        return <Stethoscope className="w-6 h-6 text-indigo-600" />;
+                    }
+                  };
+
+                  const getCardBg = (type: ReminderType, completed?: boolean) => {
+                    if (completed) return 'bg-emerald-50/50 border-emerald-200';
+                    switch (type) {
+                      case 'medicine':
+                        return 'bg-rose-50/40 border-rose-200';
+                      case 'hydration':
+                        return 'bg-sky-50/40 border-sky-200';
+                      case 'activity':
+                        return 'bg-emerald-50/40 border-emerald-200';
+                      case 'appointment':
+                        return 'bg-indigo-50/40 border-indigo-200';
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={rem.id}
+                      className={`p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${getCardBg(
+                        rem.type,
+                        rem.completedToday
+                      )}`}
+                    >
+                      <div className="flex items-start sm:items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-white shadow-xs flex items-center justify-center flex-shrink-0 border border-gray-100">
+                          {getPatientIcon(rem.type)}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-gray-700 bg-white/80 px-2.5 py-0.5 rounded-md border border-gray-200">
+                              <Clock className="w-3 h-3 text-sage-600" />
+                              <span>{rem.time}</span>
+                            </span>
+                            {rem.schedule && (
+                              <span className="text-[11px] font-semibold text-gray-500">
+                                • {rem.schedule}
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-lg sm:text-xl font-black text-gray-900 leading-snug">
+                            {title}
+                          </h4>
+
+                          {notes && (
+                            <p className="text-xs sm:text-sm text-gray-600 font-medium mt-0.5 leading-relaxed">
+                              {notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Tactile Large Tap Target for Senior Acknowledgment */}
+                      <button
+                        onClick={() => onToggleReminderCompleted?.(rem.id)}
+                        className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black text-sm sm:text-base transition-all select-none shadow-xs active:scale-95 flex-shrink-0 ${
+                          rem.completedToday
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+                            : 'bg-sage-600 text-white hover:bg-sage-700 shadow-sm'
+                        }`}
+                      >
+                        {rem.completedToday ? (
+                          <>
+                            <CheckCircle2 className="w-5 h-5" />
+                            <span>{t.patient.reminders.completed}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-5 h-5" />
+                            <span>{t.patient.reminders.markDone}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Featured / Recommended Activity Hero Card */}
       <div className="w-full mb-8">

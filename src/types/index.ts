@@ -1,4 +1,4 @@
-export type UserRole = 'caregiver' | 'patient';
+export type UserRole = 'caregiver' | 'patient' | 'healthcare_worker';
 
 // Nine supported languages
 export type Language = 'en' | 'as' | 'bn' | 'ne' | 'lus' | 'kha' | 'ny' | 'trp' | 'mni';
@@ -73,6 +73,39 @@ export interface ReminderItem {
   completedToday?: boolean;
   lastAcknowledgedAt?: string;
   createdAt?: string;
+}
+
+export type CaregiverAlertType =
+  | 'missed_medicine'
+  | 'missed_hydration'
+  | 'missed_activity'
+  | 'missed_appointment'
+  | 'inactivity';
+
+export type AlertSeverity = 'high' | 'medium' | 'low';
+export type AlertStatus = 'unread' | 'read' | 'resolved';
+
+export interface CaregiverAlert {
+  id: string;
+  patientId: string;
+  patientName: string;
+  type: CaregiverAlertType;
+  severity: AlertSeverity;
+  status: AlertStatus;
+  title: string;
+  titleEn?: string;
+  titleAs?: string;
+  titles?: Partial<Record<Language, string>>;
+  description: string;
+  descriptionEn?: string;
+  descriptionAs?: string;
+  descriptions?: Partial<Record<Language, string>>;
+  relevantItemTitle: string;
+  relevantItemId?: string;
+  dueTime?: string;
+  timestamp: string; // ISO 8601
+  readAt?: string;
+  resolvedAt?: string;
 }
 
 export interface FavoriteMusic {

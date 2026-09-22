@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Heart, Shield, Play, Sparkles, UserCheck, ArrowRight, Globe } from 'lucide-react';
+import { Heart, Shield, Play, Sparkles, UserCheck, ArrowRight, Globe, Stethoscope } from 'lucide-react';
 import { useLanguage, SUPPORTED_LANGUAGES } from '../../locales/LanguageContext';
 import { UserRole } from '../../types';
 import { AccessibleButton } from './AccessibleButton';
 import { CaregiverPinModal } from './CaregiverPinModal';
+import { HealthcarePinModal } from './HealthcarePinModal';
 
 interface WelcomeAuthScreenProps {
   onSelectRole: (role: UserRole) => void;
@@ -12,6 +13,7 @@ interface WelcomeAuthScreenProps {
 export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRole }) => {
   const { t, language, setLanguage } = useLanguage();
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showHealthcarePinModal, setShowHealthcarePinModal] = useState(false);
 
   const handleCaregiverClick = () => {
     setShowPinModal(true);
@@ -20,6 +22,15 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
   const handlePinSuccess = () => {
     setShowPinModal(false);
     onSelectRole('caregiver');
+  };
+
+  const handleHealthcareClick = () => {
+    setShowHealthcarePinModal(true);
+  };
+
+  const handleHealthcareSuccess = () => {
+    setShowHealthcarePinModal(false);
+    onSelectRole('healthcare_worker');
   };
 
   return (
@@ -109,6 +120,34 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
             </div>
             <ArrowRight className="w-6 h-6 text-gray-400 group-hover:translate-x-1 transition flex-shrink-0" />
           </button>
+
+          {/* Healthcare Worker Role Button */}
+          <button
+            onClick={handleHealthcareClick}
+            className="w-full text-left p-5 rounded-3xl bg-white hover:bg-teal-50/50 border-3 border-teal-200 hover:border-teal-400 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200 group-hover:scale-105 transition">
+                <Stethoscope className="w-7 h-7 text-teal-700" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-black text-gray-900">
+                    {language === 'as' ? 'স্বাস্থ্যকৰ্মী প্ৰৱেশ' : 'Healthcare Worker'}
+                  </h3>
+                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                    {language === 'as' ? 'কেৱল পঢ়িব পৰা' : 'Read-Only'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 font-medium line-clamp-2 mt-0.5">
+                  {language === 'as'
+                    ? 'মানসিক অগ্ৰগতি, খেলৰ কাৰ্যকলাপ আৰু নিয়ম পালনৰ অনা-চিকিৎসা পৰ্যবেক্ষণ।'
+                    : 'Observational overview: track cognitive trends, game activity, and routine adherence.'}
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-6 h-6 text-gray-400 group-hover:translate-x-1 transition flex-shrink-0" />
+          </button>
         </div>
 
         {/* Demo Notice */}
@@ -121,6 +160,12 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
         isOpen={showPinModal}
         onClose={() => setShowPinModal(false)}
         onSuccess={handlePinSuccess}
+      />
+
+      <HealthcarePinModal
+        isOpen={showHealthcarePinModal}
+        onClose={() => setShowHealthcarePinModal(false)}
+        onSuccess={handleHealthcareSuccess}
       />
     </div>
   );

@@ -1,6 +1,9 @@
 import os
 import json
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 from ..models import Patient, GameAttempt
@@ -33,7 +36,7 @@ class AIService:
         )
 
         api_key = os.getenv("GEMINI_API_KEY", "").strip()
-        if not api_key:
+        if not api_key or not httpx:
             return fallback
 
         # Call Gemini REST API

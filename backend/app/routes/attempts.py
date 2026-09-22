@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from ..db import get_db
-from ..models import GameAttempt, Patient
+from ..models import GameAttempt
+from ..auth import verify_patient_exists
 from ..schemas import GameAttemptCreate, GameAttemptResponse
 from ..services.analytics_service import GAME_COGNITIVE_SKILL_MAP
 
@@ -12,6 +13,7 @@ router = APIRouter(prefix="/api/patients", tags=["attempts"])
 
 @router.get("/{patient_id}/attempts", response_model=List[GameAttemptResponse])
 def get_patient_attempts(patient_id: str, db: Session = Depends(get_db)):
+    verify_patient_exists(patient_id, db)
     attempts = db.query(GameAttempt).filter(
         GameAttempt.patient_id == patient_id
     ).order_by(GameAttempt.timestamp.desc()).all()
@@ -36,12 +38,10 @@ def get_patient_attempts(patient_id: str, db: Session = Depends(get_db)):
 
 @router.post("/{patient_id}/attempts", response_model=GameAttemptResponse)
 def record_attempt(patient_id: str, attempt_in: GameAttemptCreate, db: Session = Depends(get_db)):
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        # Create minimal patient placeholder if not exists
-        patient = Patient(id=patient_id, name="Patient", age=70)
-        db.add(patient)
-        db.commit()
+    verify_patient_exists(patient_id, db)
+
+    if attempt_in.patient_id and attempt_in.patient_id != patient_id:
+        raise HTTPException(status_code=400, detail="Mismatched patient ID in payload")
 
     skill = attempt_in.cognitive_skill or GAME_COGNITIVE_SKILL_MAP.get(attempt_in.game_id, "problem_solving")
     skills_str = ",".join(attempt_in.cognitive_skills) if attempt_in.cognitive_skills else skill

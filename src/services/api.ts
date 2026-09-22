@@ -2,19 +2,41 @@ import {
   Patient,
   FamilyMember,
   RoutineItem,
+  ReminderItem,
   FavoriteMusic,
   GameAttempt,
   CognitiveAnalytics,
   AIRecommendationResult,
   AICaregiverInsightResult,
+  CaregiverAlert,
   Language,
 } from '../types';
+import { db } from './db';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 class ApiService {
   private isOnline: boolean = false;
   private lastHealthCheck: number = 0;
+
+  private getAuthHeaders(additional?: Record<string, string>): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+      'X-User-Role': typeof db !== 'undefined' ? db.getActiveRole() : 'patient',
+      ...additional,
+    };
+    if (typeof sessionStorage !== 'undefined') {
+      const pin = sessionStorage.getItem('memora_session_pin');
+      if (pin) {
+        headers['X-Caregiver-PIN'] = pin;
+      }
+      const healthcarePin = sessionStorage.getItem('memora_session_healthcare_pin');
+      if (healthcarePin) {
+        headers['X-Healthcare-PIN'] = healthcarePin;
+      }
+    }
+    return headers;
+  }
 
   async checkHealth(): Promise<boolean> {
     const now = Date.now();
@@ -40,7 +62,9 @@ class ApiService {
 
   async getPatient(patientId: string): Promise<Patient | null> {
     try {
-      const res = await fetch(`${API_BASE}/api/patients/${patientId}`);
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}`, {
+        headers: this.getAuthHeaders(),
+      });
       if (!res.ok) return null;
       const data = await res.json();
       return {
@@ -61,7 +85,9 @@ class ApiService {
 
   async getGameAttempts(patientId: string): Promise<GameAttempt[] | null> {
     try {
-      const res = await fetch(`${API_BASE}/api/patients/${patientId}/attempts`);
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/attempts`, {
+        headers: this.getAuthHeaders(),
+      });
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -75,7 +101,7 @@ class ApiService {
     try {
       const res = await fetch(`${API_BASE}/api/patients/${attempt.patientId}/attempts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           patientId: attempt.patientId,
           gameId: attempt.gameId,
@@ -96,9 +122,103 @@ class ApiService {
     }
   }
 
+  async getReminders(patientId: string): Promise<ReminderItem[] | null> {
+    try {
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/reminders`, {
+        headers: this.getAuthHeaders(),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async saveReminder(reminder: ReminderItem): Promise<ReminderItem | null> {
+    try {
+      const res = await fetch(`${API_BASE}/api/patients/${reminder.patientId}/reminders`, {
+        method: 'POST',
+        headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(reminder),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async deleteReminder(patientId: string, reminderId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/reminders/${reminderId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async getAlerts(patientId: string): Promise<CaregiverAlert[] | null> {
+    try {
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/alerts`, {
+        headers: this.getAuthHeaders(),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async saveAlert(alert: CaregiverAlert): Promise<CaregiverAlert | null> {
+    try {
+      const res = await fetch(`${API_BASE}/api/patients/${alert.patientId}/alerts`, {
+        method: 'POST',
+        headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(alert),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async updateAlertStatus(patientId: string, alertId: string, status: string): Promise<boolean> {
+    try {
+      const payload: any = { status };
+      if (status === 'resolved') payload.resolvedAt = new Date().toISOString();
+      if (status === 'read') payload.readAt = new Date().toISOString();
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/alerts/${alertId}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async deleteAlert(patientId: string, alertId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/alerts/${alertId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async getAnalytics(patientId: string): Promise<CognitiveAnalytics | null> {
     try {
-      const res = await fetch(`${API_BASE}/api/patients/${patientId}/analytics`);
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/analytics`, {
+        headers: this.getAuthHeaders(),
+      });
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -108,7 +228,9 @@ class ApiService {
 
   async getRecommendation(patientId: string): Promise<AIRecommendationResult | null> {
     try {
-      const res = await fetch(`${API_BASE}/api/patients/${patientId}/recommendation`);
+      const res = await fetch(`${API_BASE}/api/patients/${patientId}/recommendation`, {
+        headers: this.getAuthHeaders(),
+      });
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -122,7 +244,10 @@ class ApiService {
   ): Promise<AICaregiverInsightResult | null> {
     try {
       const res = await fetch(
-        `${API_BASE}/api/patients/${patientId}/caregiver-insights?lang=${encodeURIComponent(lang)}`
+        `${API_BASE}/api/patients/${patientId}/caregiver-insights?lang=${encodeURIComponent(lang)}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
       );
       if (!res.ok) return null;
       return await res.json();

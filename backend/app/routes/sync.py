@@ -2,20 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 from ..db import get_db
-from ..models import Patient, FamilyMember, Routine, MusicPreference, GameAttempt
+from ..models import Patient, FamilyMember, Routine, MusicPreference, GameAttempt, Reminder, Alert
+from ..auth import require_caregiver, verify_patient_exists
 from ..schemas import SyncBootstrapRequest
 from ..services.analytics_service import GAME_COGNITIVE_SKILL_MAP
 
 router = APIRouter(prefix="/api", tags=["sync"])
 
 @router.get("/patients/{patient_id}/full")
-def get_full_patient_data(patient_id: str, db: Session = Depends(get_db)):
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+def get_full_patient_data(
+    patient_id: str,
+    db: Session = Depends(get_db),
+    _auth: bool = Depends(require_caregiver),
+):
+    patient = verify_patient_exists(patient_id, db)
 
     family = db.query(FamilyMember).filter(FamilyMember.patient_id == patient_id).all()
     routines = db.query(Routine).filter(Routine.patient_id == patient_id).order_by(Routine.routine_order).all()
+    reminders = db.query(Reminder).filter(Reminder.patient_id == patient_id).all()
+    alerts = db.query(Alert).filter(Alert.patient_id == patient_id).order_by(Alert.timestamp.desc()).all()
     music = db.query(MusicPreference).filter(MusicPreference.patient_id == patient_id).all()
     attempts = db.query(GameAttempt).filter(GameAttempt.patient_id == patient_id).order_by(GameAttempt.timestamp.desc()).all()
 
@@ -23,6 +28,8 @@ def get_full_patient_data(patient_id: str, db: Session = Depends(get_db)):
         "patient": patient,
         "familyMembers": family,
         "routines": routines,
+        "reminders": reminders,
+        "alerts": alerts,
         "musicTracks": music,
         "gameAttempts": [
             {
@@ -41,7 +48,11 @@ def get_full_patient_data(patient_id: str, db: Session = Depends(get_db)):
     }
 
 @router.post("/sync/bootstrap")
-def sync_bootstrap(payload: SyncBootstrapRequest, db: Session = Depends(get_db)):
+def sync_bootstrap(
+    payload: SyncBootstrapRequest,
+    db: Session = Depends(get_db),
+    _auth: bool = Depends(require_caregiver),
+):
     count = db.query(Patient).count()
     if count > 0:
         return {"status": "already_initialized", "message": "Database already contains patient data"}
