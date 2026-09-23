@@ -20,6 +20,7 @@ import { useLanguage } from '../../locales/LanguageContext';
 import {
   Patient,
   GameAttempt,
+  RoutineItem,
   ReminderItem,
   CaregiverAlert,
   GameId,
@@ -27,13 +28,14 @@ import {
   ReminderType,
 } from '../../types';
 import { PatientOverviewTab } from '../caregiver/PatientOverviewTab';
-import { getReminderTitle, getReminderNotes, getAlertTitle, getAlertDescription } from '../../services/seedData';
+import { getReminderTitle, getReminderNotes, getAlertTitle, getAlertDescription, getRoutineItemTitle } from '../../services/seedData';
 
 type HealthcareTabId = 'overview' | 'activity' | 'adherence' | 'alerts';
 
 interface HealthcareDashboardProps {
   patient: Patient;
   gameAttempts: GameAttempt[];
+  routines?: RoutineItem[];
   reminders: ReminderItem[];
   alerts: CaregiverAlert[];
   onSwitchToPatient: () => void;
@@ -42,6 +44,7 @@ interface HealthcareDashboardProps {
 export const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({
   patient,
   gameAttempts,
+  routines = [],
   reminders,
   alerts,
   onSwitchToPatient,
@@ -195,7 +198,7 @@ export const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({
               <div className="text-center py-12 text-gray-400">
                 <History className="w-12 h-12 mx-auto mb-3 opacity-40 text-teal-600" />
                 <p className="text-sm font-medium">
-                  {language === 'as' ? 'কোনো কাৰ্যকলাপ পোৱা নগল।' : 'No activity sessions recorded yet.'}
+                  {language === 'as' ? 'এতিয়ালৈকে কোনো খেল খেলা হোৱা নাই।' : 'No games played yet. Activity sessions will appear here.'}
                 </p>
               </div>
             ) : (
@@ -277,9 +280,82 @@ export const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {reminders.map((r) => {
-                const title = getReminderTitle(r, language);
+            {/* 1. Daily Routine Adherence */}
+            <div className="mb-8">
+              <h4 className="text-base font-bold text-gray-800 mb-3 flex items-center justify-between">
+                <span>{language === 'as' ? 'দৈনন্দিন ৰুটিন পালন' : 'Daily Routine Schedule & Completion'}</span>
+                <span className="text-xs font-semibold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+                  {routines.filter((r) => r.completed).length} / {routines.length} {language === 'as' ? 'সম্পন্ন' : 'Completed'}
+                </span>
+              </h4>
+
+              {routines.length === 0 ? (
+                <p className="text-xs text-gray-400 py-4 text-center">{language === 'as' ? 'কোনো ৰুটিন নিৰ্ধাৰণ কৰা হোৱা নাই।' : 'No routine steps configured.'}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[...routines].sort((a, b) => a.order - b.order).map((rt) => {
+                    const title = getRoutineItemTitle(rt, language);
+                    return (
+                      <div
+                        key={rt.id}
+                        className={`p-3.5 rounded-2xl border-2 transition flex items-center justify-between gap-3 ${
+                          rt.completed
+                            ? 'bg-emerald-50/50 border-emerald-200'
+                            : 'bg-white border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-xl bg-teal-50 text-teal-800 font-black text-xs flex items-center justify-center border border-teal-200 flex-shrink-0">
+                            {rt.order}
+                          </span>
+                          <div>
+                            <h5 className="text-sm font-bold text-gray-900 leading-snug">{title}</h5>
+                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                              <Clock className="w-3 h-3 text-teal-600" />
+                              <span>{rt.time}</span>
+                              <span className="capitalize text-gray-400">• {rt.period}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 flex-shrink-0 ${
+                            rt.completed
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200'
+                          }`}
+                        >
+                          {rt.completed ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                              <span>{language === 'as' ? 'সম্পূৰ্ণ' : 'Done'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-3 h-3 text-gray-400" />
+                              <span>{language === 'as' ? 'বাকী আছে' : 'Pending'}</span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Scheduled Reminders Adherence */}
+            <div className="pt-6 border-t border-gray-100">
+              <h4 className="text-base font-bold text-gray-800 mb-3 flex items-center justify-between">
+                <span>{language === 'as' ? 'ঔষধ আৰু স্বাস্থ্য সোঁৱৰণী' : 'Care & Medication Reminders'}</span>
+                <span className="text-xs font-semibold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+                  {reminders.filter((r) => r.completedToday).length} / {reminders.length} {language === 'as' ? 'স্বীকৃত' : 'Acknowledged'}
+                </span>
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {reminders.map((r) => {
+                  const title = getReminderTitle(r, language);
                 const notes = getReminderNotes(r, language);
                 return (
                   <div
@@ -341,7 +417,8 @@ export const HealthcareDashboard: React.FC<HealthcareDashboardProps> = ({
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Tab 4: Alert & Event History */}
       {activeTab === 'alerts' && (

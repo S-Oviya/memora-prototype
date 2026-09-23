@@ -60,18 +60,11 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
           <Heart className="w-10 h-10 fill-white/20" />
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-1">
+        <div className="flex items-center justify-center mb-3">
           <h1 className="text-3xl font-black text-sage-900 tracking-tight">
             Memora
           </h1>
-          <span className="text-lg font-bold text-sage-600 bg-sage-50 px-2 py-0.5 rounded-lg border border-sage-200">
-            মেমোৰা
-          </span>
         </div>
-
-        <p className="text-xs font-bold text-sage-700 uppercase tracking-widest mb-3">
-          {t.app.subtitle}
-        </p>
 
         <p className="text-sm text-gray-600 mb-8 leading-relaxed">
           {t.auth.welcomeSubtitle}
@@ -150,10 +143,7 @@ export const WelcomeAuthScreen: React.FC<WelcomeAuthScreenProps> = ({ onSelectRo
           </button>
         </div>
 
-        {/* Demo Notice */}
-        <p className="text-[11px] text-gray-400 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-          {t.auth.demoNotice}
-        </p>
+
       </div>
 
       <CaregiverPinModal

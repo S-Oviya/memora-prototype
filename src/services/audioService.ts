@@ -1,6 +1,7 @@
 // Audio Service for Memora
 // Uses Web Audio API for dementia-friendly gentle chimes, melodies, and sound effects
 // plus HTML5 Audio and MediaRecorder for family voice recording and playback.
+import { api } from './api';
 
 class AudioService {
   private ctx: AudioContext | null = null;
@@ -220,68 +221,20 @@ class AudioService {
     return supported.includes(lang.toLowerCase());
   }
 
-  // Spoken voice guidance:
-  // 1. Attempts backend Neural TTS (guarantees authentic Assamese, Bengali, Nepali, and English pronunciation)
-  // 2. Falls back to browser SpeechSynthesis if backend is unavailable and matching voice is found
-  // 3. Gracefully resolves without error if no speech engine is available
+  // Spoken voice guidance using offline FastAPI /tts service (no browser SpeechSynthesis or cloud TTS)
   async speakText(text: string, lang: string = 'en'): Promise<void> {
     if (!text || !text.trim()) return;
 
-    // First attempt: Backend Neural TTS
-    const apiBase = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
-    const ttsUrl = `${apiBase}/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}`;
-
     try {
-      await this.playVoice(ttsUrl);
-      return;
-    } catch {
-      // Backend TTS unavailable or language not in neural model, fall back to browser Web Speech API
-    }
-
-    // Second attempt: Browser SpeechSynthesis
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const blob = await api.synthesizeSpeech(text, lang);
+      const url = URL.createObjectURL(blob);
       try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.85; // Slower, calmer for elderly
-        utterance.pitch = 1.0;
-
-        const voices = window.speechSynthesis.getVoices();
-        const langMap: Record<string, string[]> = {
-          en: ['en-IN', 'en-GB', 'en-US'],
-          as: ['as-IN', 'bn-IN'], // If browser lacks as-IN, bn-IN can articulate Eastern Nagari phonetically
-          bn: ['bn-IN', 'bn-BD'],
-          ne: ['ne-NP', 'hi-IN'],
-          ny: ['en-IN', 'hi-IN'],
-          lus: ['en-IN', 'en-GB'],
-          kha: ['en-IN', 'en-GB'],
-          trp: ['bn-IN', 'as-IN'], // Eastern Nagari script phonetics
-          mni: ['mni-IN', 'bn-IN', 'en-IN'],
-        };
-
-        const targetLocales = langMap[lang.toLowerCase()] || [];
-        if (targetLocales.length > 0) {
-          if (voices.length > 0) {
-            const matchedVoice = voices.find((v) =>
-              targetLocales.some((loc) => v.lang.toLowerCase().startsWith(loc.toLowerCase()))
-            );
-            if (matchedVoice) {
-              utterance.voice = matchedVoice;
-              utterance.lang = matchedVoice.lang;
-            } else {
-              utterance.lang = targetLocales[0];
-            }
-          } else {
-            utterance.lang = targetLocales[0];
-          }
-          window.speechSynthesis.speak(utterance);
-        } else if (lang === 'en') {
-          utterance.lang = 'en-US';
-          window.speechSynthesis.speak(utterance);
-        }
-      } catch {
-        // Ignore synthesis error gracefully
+        await this.playVoice(url);
+      } finally {
+        URL.revokeObjectURL(url);
       }
+    } catch {
+      // Backend TTS offline or language unavailable; fail gracefully without using browser SpeechSynthesis
     }
   }
 }

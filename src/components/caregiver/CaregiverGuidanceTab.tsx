@@ -147,7 +147,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   const resolvedPatient = latestDbPatient || patientData || patient;
   // Caregiver's currently selected language is the source of truth for Guidance
   const guidanceLanguage: Language = caregiverLanguage || 'en';
-  const resolvedAttempts = attempts || db.getGameAttempts();
+  const resolvedAttempts = attempts !== undefined ? attempts : db.getGameAttempts();
 
   // Synchronously compute offline insights strictly using the caregiver's selected language
   const aiInsight: AICaregiverInsightResult = useMemo(() => {
@@ -188,9 +188,16 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
     const safeText = trimmed.length > 480 ? trimmed.substring(0, 480) + '.' : trimmed;
 
     setLoadingSpeechId(id);
+    const requestLang = guidanceLanguage;
 
     try {
-      const blob = await api.synthesizeSpeech(safeText, guidanceLanguage);
+      const blob = await api.synthesizeSpeech(safeText, requestLang);
+
+      // If caregiver switched language while synthesis was running, discard outdated audio
+      if (guidanceLanguage !== requestLang) {
+        return;
+      }
+
       const audioUrl = URL.createObjectURL(blob);
       currentBlobUrlRef.current = audioUrl;
 
@@ -210,7 +217,9 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
       setActiveSpeechId(id);
     } catch (err: any) {
       stopAudio();
-      setTtsError(err.message || 'Speech generation encountered an error.');
+      if (err?.name !== 'AbortError') {
+        setTtsError(err?.message || 'Speech generation encountered an error.');
+      }
     } finally {
       setLoadingSpeechId(null);
     }

@@ -1,6 +1,4 @@
-import { en } from './en';
-
-export const trp: typeof en = {
+export const trp = {
   app: {
     name: 'মেমোরা',
     tagline: 'নোকনি বোরোকরগনি তানি মুকমু তেই মন কাহাম থন্নানি',

@@ -52,17 +52,32 @@ class AnalyticsService:
 
         total_attempts = len(attempts)
         successful_attempts = sum(1 for a in attempts if a.success)
-        success_rate = round((successful_attempts / total_attempts) * 100) if total_attempts > 0 else 100
+        success_rate = round((successful_attempts / total_attempts) * 100) if total_attempts > 0 else 0
 
-        # Baseline scores
-        cognitive_scores: Dict[str, int] = {
-            'recognition': 88,
-            'recall': 82,
-            'problem_solving': 78,
-            'associative_memory': 75,
-            'categorization': 72,
-            'visual_spatial': 80,
-        }
+        if total_attempts == 0:
+            cognitive_scores: Dict[str, int] = {s: 0 for s in ALL_COGNITIVE_SKILLS}
+            recent_trends = [
+                {
+                    'skill': s,
+                    'score': 0,
+                    'attemptsCount': 0
+                }
+                for s in ALL_COGNITIVE_SKILLS
+            ]
+            return {
+                'patientId': patient_id,
+                'totalAttempts': 0,
+                'successRate': 0,
+                'cognitiveScores': cognitive_scores,
+                'strongestArea': 'none',
+                'practiceArea': 'none',
+                'recommendedActivity': 'familiar-faces',
+                'recommendedLevel': 1,
+                'recentTrends': recent_trends,
+            }
+
+        # Baseline scores for skills that haven't been practiced yet are 0
+        cognitive_scores: Dict[str, int] = {s: 0 for s in ALL_COGNITIVE_SKILLS}
 
         skill_attempts: Dict[str, List[Dict[str, Any]]] = {s: [] for s in ALL_COGNITIVE_SKILLS}
 
@@ -96,10 +111,16 @@ class AnalyticsService:
                 'attemptsCount': len(items)
             })
 
-        # Identify strongest and practice areas
-        strongest_area = max(cognitive_scores.keys(), key=lambda k: cognitive_scores[k])
-        practice_area = min(cognitive_scores.keys(), key=lambda k: cognitive_scores[k])
-        recommended_activity = PRACTICE_SKILL_TO_GAME.get(practice_area, 'odd-one-out')
+        # Identify strongest and practice areas among played skills
+        played_skills = [s for s in ALL_COGNITIVE_SKILLS if len(skill_attempts[s]) > 0]
+        if played_skills:
+            strongest_area = max(played_skills, key=lambda k: (cognitive_scores[k], len(skill_attempts[k])))
+            practice_area = min(played_skills, key=lambda k: (cognitive_scores[k], -len(skill_attempts[k])))
+            recommended_activity = PRACTICE_SKILL_TO_GAME.get(practice_area, 'familiar-faces')
+        else:
+            strongest_area = 'none'
+            practice_area = 'none'
+            recommended_activity = 'familiar-faces'
 
         # Recommended level based on attempts
         from .personalization import PersonalizationEngine

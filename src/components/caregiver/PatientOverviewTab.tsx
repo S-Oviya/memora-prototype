@@ -310,7 +310,7 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
             {t.caregiver.stats.overallSuccessRate}
           </p>
           <p className="text-2xl sm:text-3xl font-black text-emerald-700 mt-1">
-            {successRate}%
+            {totalAttempts > 0 ? `${successRate}%` : '—'}
           </p>
         </div>
 
@@ -323,7 +323,7 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
             {t.caregiver.stats.activeStreak}
           </p>
           <p className="text-2xl sm:text-3xl font-black text-gray-900 mt-1">
-            {uniqueDays} {language === 'as' ? 'দিন' : 'Days'}
+            {totalAttempts > 0 ? `${uniqueDays} ${language === 'as' ? 'দিন' : 'Days'}` : `0 ${language === 'as' ? 'দিন' : 'Days'}`}
           </p>
         </div>
 
@@ -336,7 +336,7 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
             {t.caregiver.stats.averageTime}
           </p>
           <p className="text-2xl sm:text-3xl font-black text-gray-900 mt-1">
-            {avgTime}s
+            {totalAttempts > 0 ? `${avgTime}s` : '—'}
           </p>
         </div>
       </div>
@@ -545,52 +545,62 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
         </div>
 
         {/* 6 Cognitive Skill Indicators Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {skillMetrics.map((sm) => {
-            const isTop = strongestSkill?.skill === sm.skill;
-            const isNeedsPractice = practiceAreaSkill?.skill === sm.skill && sm.rate < 70;
+        {totalAttempts === 0 ? (
+          <div className="p-8 text-center bg-warm-50/50 rounded-2xl border border-dashed border-warm-200">
+            <p className="text-sm font-semibold text-gray-500">
+              {language === 'as'
+                ? 'এতিয়ালৈকে কোনো খেল খেলা হোৱা নাই। জ্ঞানমূলক কাৰ্য্যকলাপ সম্পন্ন কৰাৰ পাছত সূচকসমূহ প্ৰদৰ্শিত হ’ব।'
+                : 'No games played yet. Activity indicators will appear after completing cognitive exercises.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {skillMetrics.map((sm) => {
+              const isTop = strongestSkill?.skill === sm.skill;
+              const isNeedsPractice = practiceAreaSkill?.skill === sm.skill && sm.rate < 70;
 
-            return (
-              <div
-                key={sm.skill}
-                className={`p-4 rounded-2xl border transition-all ${
-                  isTop
-                    ? 'bg-emerald-50/50 border-emerald-200'
-                    : isNeedsPractice
-                    ? 'bg-amber-50/50 border-amber-200'
-                    : 'bg-warm-50/40 border-warm-200'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{getSkillIcon(sm.skill)}</span>
-                    <span className="font-bold text-gray-900 text-sm">{getSkillTitle(sm.skill)}</span>
+              return (
+                <div
+                  key={sm.skill}
+                  className={`p-4 rounded-2xl border transition-all ${
+                    isTop
+                      ? 'bg-emerald-50/50 border-emerald-200'
+                      : isNeedsPractice
+                      ? 'bg-amber-50/50 border-amber-200'
+                      : 'bg-warm-50/40 border-warm-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{getSkillIcon(sm.skill)}</span>
+                      <span className="font-bold text-gray-900 text-sm">{getSkillTitle(sm.skill)}</span>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-500">
+                      {sm.total} {language === 'as' ? 'বাৰ' : 'sessions'}
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-500">
-                    {sm.total} {language === 'as' ? 'বাৰ' : 'sessions'}
-                  </span>
-                </div>
 
-                {/* Progress bar */}
-                <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-2">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      sm.rate >= 80 ? 'bg-emerald-600' : sm.rate >= 50 ? 'bg-amber-500' : 'bg-slate-400'
-                    }`}
-                    style={{ width: `${sm.total > 0 ? sm.rate : 0}%` }}
-                  />
-                </div>
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-2">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        sm.rate >= 80 ? 'bg-emerald-600' : sm.rate >= 50 ? 'bg-amber-500' : 'bg-slate-400'
+                      }`}
+                      style={{ width: `${sm.total > 0 ? sm.rate : 0}%` }}
+                    />
+                  </div>
 
-                <div className="flex justify-between items-center text-xs font-medium text-gray-600">
-                  <span>{language === 'as' ? 'সফলতা' : 'Accuracy'}</span>
-                  <span className="font-bold text-gray-900">
-                    {sm.total > 0 ? `${sm.rate}%` : (language === 'as' ? 'অপ্ৰশিক্ষিত' : 'Not yet tested')}
-                  </span>
+                  <div className="flex justify-between items-center text-xs font-medium text-gray-600">
+                    <span>{language === 'as' ? 'সফলতা' : 'Accuracy'}</span>
+                    <span className="font-bold text-gray-900">
+                      {sm.total > 0 ? `${sm.rate}%` : (language === 'as' ? 'অপ্ৰশিক্ষিত' : 'Not yet tested')}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Progress Breakdown by Game */}
@@ -600,42 +610,50 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
           {t.caregiver.stats.performanceByGame}
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(Object.keys(gamesMap) as GameId[]).map((gId) => {
-            const gameData = gamesMap[gId];
-            const count = gameData.attempts.length;
-            const wins = gameData.attempts.filter((a) => a.success).length;
-            const rate = count > 0 ? Math.round((wins / count) * 100) : 0;
-            const badge = getGameBadge(gId);
+        {totalAttempts === 0 ? (
+          <div className="p-8 text-center bg-warm-50/50 rounded-2xl border border-dashed border-warm-200">
+            <p className="text-sm font-semibold text-gray-500">
+              {language === 'as' ? 'এতিয়ালৈকে কোনো খেল খেলা হোৱা নাই।' : 'No games played yet.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {(Object.keys(gamesMap) as GameId[]).map((gId) => {
+              const gameData = gamesMap[gId];
+              const count = gameData.attempts.length;
+              const wins = gameData.attempts.filter((a) => a.success).length;
+              const rate = count > 0 ? Math.round((wins / count) * 100) : 0;
+              const badge = getGameBadge(gId);
 
-            return (
-              <div key={gId} className="p-4 rounded-2xl bg-warm-50 border border-warm-200">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{badge.icon}</span>
-                    <span className="font-bold text-gray-900 text-base">{gameData.name}</span>
+              return (
+                <div key={gId} className="p-4 rounded-2xl bg-warm-50 border border-warm-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{badge.icon}</span>
+                      <span className="font-bold text-gray-900 text-base">{gameData.name}</span>
+                    </div>
+                    <span className="text-xs font-bold text-gray-500">
+                      {count} {language === 'as' ? 'বাৰ' : 'plays'}
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-gray-500">
-                    {count} {language === 'as' ? 'বাৰ' : 'plays'}
-                  </span>
-                </div>
 
-                {/* Progress bar */}
-                <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden mb-2">
-                  <div
-                    className="bg-sage-600 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${rate}%` }}
-                  />
-                </div>
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden mb-2">
+                    <div
+                      className="bg-sage-600 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${rate}%` }}
+                    />
+                  </div>
 
-                <div className="flex justify-between text-xs font-semibold text-gray-600">
-                  <span>{language === 'as' ? 'সফলতাৰ হাৰ' : 'Accuracy'}</span>
-                  <span className="text-sage-800 font-bold">{count > 0 ? `${rate}%` : '—'}</span>
+                  <div className="flex justify-between text-xs font-semibold text-gray-600">
+                    <span>{language === 'as' ? 'সফলতাৰ হাৰ' : 'Accuracy'}</span>
+                    <span className="text-sage-800 font-bold">{count > 0 ? `${rate}%` : '—'}</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Recent Sessions Table */}
@@ -645,9 +663,13 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
         </h3>
 
         {recentAttempts.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-6">
-            {t.caregiver.stats.noDataYet}
-          </p>
+          <div className="p-8 text-center bg-warm-50/50 rounded-2xl border border-dashed border-warm-200">
+            <p className="text-sm font-semibold text-gray-500">
+              {language === 'as'
+                ? 'এতিয়ালৈকে কোনো খেল খেলা হোৱা নাই। অনুৰোধ কৰা খেলৰ ফলাফলসমূহ ইয়াত দেখা যাব।'
+                : 'No games played yet. Recorded sessions will appear here.'}
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -681,13 +703,18 @@ export const PatientOverviewTab: React.FC<PatientOverviewTabProps> = ({
                         {t.patient.level} {att.level}
                       </td>
                       <td className="py-3.5 px-2">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
-                            att.success ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {att.success ? (language === 'as' ? 'সফল' : 'Success') : (language === 'as' ? 'সহায় দিয়া হ’ল' : 'Assisted')}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                              att.success ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {att.success ? (language === 'as' ? 'সফল' : 'Success') : (language === 'as' ? 'সহায় দিয়া হ’ল' : 'Assisted')}
+                          </span>
+                          <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md">
+                            {att.score}%
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3.5 px-2 text-gray-600 font-medium">
                         {att.timeTakenSeconds}s

@@ -15,13 +15,13 @@ export type TranslationType = typeof en;
 export const translations: Record<Language, TranslationType> = {
   en,
   as: as as unknown as TranslationType,
-  bn,
-  ne,
-  lus,
-  kha,
-  ny,
-  trp,
-  mni,
+  bn: bn as unknown as TranslationType,
+  ne: ne as unknown as TranslationType,
+  lus: lus as unknown as TranslationType,
+  kha: kha as unknown as TranslationType,
+  ny: ny as unknown as TranslationType,
+  trp: trp as unknown as TranslationType,
+  mni: mni as unknown as TranslationType,
 };
 
 export const getTranslations = (lang: Language): TranslationType => translations[lang] || en;

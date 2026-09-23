@@ -36,7 +36,7 @@ class AIService:
         )
 
         api_key = os.getenv("GEMINI_API_KEY", "").strip()
-        if not api_key or not httpx:
+        if analytics.get('totalAttempts', 0) == 0 or not api_key or not httpx:
             return fallback
 
         # Call Gemini REST API
@@ -151,6 +151,38 @@ Generate a helpful, empathetic caregiver guidance response in JSON format with t
             'categorization': {'en': 'Categorization', 'as': 'বস্তুৰ শ্ৰেণী বিভাজন'},
             'visual_spatial': {'en': 'Visual-spatial', 'as': 'আকৃতি চিনাক্তকৰণ'},
         }
+
+        if not scores or all(v == 0 for v in scores.values()) or strongest in ('none', None, ''):
+            none_label = "None yet" if lang != 'as' else "এতিয়ালৈকে নাই"
+            if lang == 'as':
+                summary = f"{patient_name}ৰ এতিয়ালৈকে কোনো খেল খেলা হোৱা নাই। নিয়মীয়া কাৰ্য্যকলাপৰ পিছত ইয়াত পৰামৰ্শ প্ৰদৰ্শিত হ'ব।"
+                reason = "সহজ চিনাকি মুখ চিনাক্তকৰণৰ পৰা আৰম্ভ কৰাটো মানসিক সুস্থতাৰ বাবে উত্তম।"
+                suggestions = [
+                    "ৰোগীৰ সৈতে সহজ চিনাকি মুখ চিনাক্তকৰণৰ খেল খেলি আৰম্ভ কৰক।",
+                    "খেলৰ সময়ত কোনো খৰখেদা নকৰিব, উত্তৰ দিবলৈ পৰ্যাপ্ত সময় দিয়ক।",
+                    "শান্ত আৰু আৰামদায়ক পৰিৱেশ সৃষ্টি কৰক।"
+                ]
+            else:
+                summary = f"No games played yet for {patient_name}. Activity insights will appear once exercises are completed."
+                reason = "Starting with gentle familiar faces exercises builds comfort and confidence."
+                suggestions = [
+                    "Begin with gentle Familiar Faces or Photo Puzzle games at Level 1.",
+                    "Keep cognitive game sessions brief (2-5 minutes) in a quiet setting.",
+                    "Validate emotional comfort and offer gentle encouragement."
+                ]
+
+            return {
+                "summary": summary,
+                "strongestArea": none_label,
+                "practiceArea": none_label,
+                "recommendedActivity": recommended_activity or "familiar-faces",
+                "recommendedLevel": 1,
+                "reason": reason,
+                "caregiverSuggestions": suggestions,
+                "confidence": 0.85,
+                "disclaimer": DISCLAIMER_TEXT,
+                "isAiPowered": False
+            }
 
         strongest_label = skill_display.get(strongest, {}).get(lang, strongest.replace('_', ' ').title())
         practice_label = skill_display.get(practice, {}).get(lang, practice.replace('_', ' ').title())

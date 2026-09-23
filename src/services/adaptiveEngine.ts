@@ -1,4 +1,4 @@
-﻿import {
+import {
   GameId,
   GameAttempt,
   CognitiveSkillId,
@@ -236,16 +236,16 @@ export class AdaptiveDifficultyEngine {
   ): CognitiveAnalytics {
     const totalAttempts = attempts.length;
     const successfulAttempts = attempts.filter((a) => a.success).length;
-    const successRate = totalAttempts > 0 ? Math.round((successfulAttempts / totalAttempts) * 100) : 100;
+    const successRate = totalAttempts > 0 ? Math.round((successfulAttempts / totalAttempts) * 100) : 0;
 
-    // Default baseline scores if no attempts exist yet
+    // Baseline scores initialized to 0 for users with no game history
     const baselineScores: Record<CognitiveSkillId, number> = {
-      recognition: 88,
-      recall: 82,
-      problem_solving: 78,
-      associative_memory: 75,
-      categorization: 72,
-      visual_spatial: 80,
+      recognition: 0,
+      recall: 0,
+      problem_solving: 0,
+      associative_memory: 0,
+      categorization: 0,
+      visual_spatial: 0,
     };
 
     const skillAttempts: Record<CognitiveSkillId, { score: number; timestamp: number }[]> = {
@@ -308,33 +308,38 @@ export class AdaptiveDifficultyEngine {
     // Determine strongest area and practice area
     let strongestArea: CognitiveSkillId = 'recognition';
     let practiceArea: CognitiveSkillId = 'categorization';
-    let maxScore = -1;
-    let minScore = 999;
+    let recommendedActivity: GameId = 'familiar-faces';
+    let recommendedLevel = 1;
 
-    ALL_COGNITIVE_SKILLS.forEach((skill) => {
-      const score = cognitiveScores[skill];
-      if (score > maxScore) {
-        maxScore = score;
-        strongestArea = skill;
-      }
-      if (score < minScore) {
-        minScore = score;
-        practiceArea = skill;
-      }
-    });
+    if (totalAttempts > 0) {
+      let maxScore = -1;
+      let minScore = 999;
 
-    // Map practice area to best practice game
-    const skillToGameMap: Record<CognitiveSkillId, GameId> = {
-      categorization: 'odd-one-out',
-      associative_memory: 'matching-family',
-      visual_spatial: 'shape-fit',
-      problem_solving: 'photo-puzzle',
-      recognition: 'familiar-faces',
-      recall: 'routine-recall',
-    };
+      ALL_COGNITIVE_SKILLS.forEach((skill) => {
+        const score = cognitiveScores[skill];
+        if (score > maxScore) {
+          maxScore = score;
+          strongestArea = skill;
+        }
+        if (score < minScore) {
+          minScore = score;
+          practiceArea = skill;
+        }
+      });
 
-    const recommendedActivity = skillToGameMap[practiceArea] || 'odd-one-out';
-    const recommendedLevel = this.getRecommendedLevel(recommendedActivity, attempts);
+      // Map practice area to best practice game
+      const skillToGameMap: Record<CognitiveSkillId, GameId> = {
+        categorization: 'odd-one-out',
+        associative_memory: 'matching-family',
+        visual_spatial: 'shape-fit',
+        problem_solving: 'photo-puzzle',
+        recognition: 'familiar-faces',
+        recall: 'routine-recall',
+      };
+
+      recommendedActivity = skillToGameMap[practiceArea] || 'odd-one-out';
+      recommendedLevel = this.getRecommendedLevel(recommendedActivity, attempts);
+    }
 
     return {
       patientId,
@@ -376,11 +381,15 @@ export class AdaptiveDifficultyEngine {
 
     const total = attempts.length;
     const successes = attempts.filter((a) => a.success).length;
-    const accuracyRate = total > 0 ? Math.round((successes / total) * 100) : 100;
+    const accuracyRate = total > 0 ? Math.round((successes / total) * 100) : 0;
 
     const topRec = detailedRecommendations[recommendedGame];
-    let reasonEn = 'Neural MLP model tuned levels to encourage familiar engagement without cognitive stress.';
-    let reasonAs = 'ডিভাইচত থকা নিউৰেল মডেলটোৱে মানসিক চাপ নপৰাকৈ চিনাকি স্তৰত খেলিবলৈ পৰামৰ্শ দিছে।';
+    let reasonEn = total === 0
+      ? 'No games played yet. Starting baseline difficulty set to Level 1.'
+      : 'Neural MLP model tuned levels to encourage familiar engagement without cognitive stress.';
+    let reasonAs = total === 0
+      ? 'এতিয়ালৈকে কোনো খেল খেলা হোৱা নাই। প্ৰাৰম্ভিক স্তৰ ১ নিৰ্ধাৰণ কৰা হৈছে।'
+      : 'ডিভাইচত থকা নিউৰেল মডেলটোৱে মানসিক চাপ নপৰাকৈ চিনাকি স্তৰত খেলিবলৈ পৰামৰ্শ দিছে।';
 
     if (topRec && topRec.isMlDriven) {
       const currentLvl = topRec.features?.currentDifficulty ?? 1;

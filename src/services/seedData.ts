@@ -293,12 +293,15 @@ export const ROUTINE_ITEM_TRANSLATIONS: Record<string, Record<Language, string>>
 };
 
 export const getRoutineItemTitle = (item: RoutineItem, lang: Language): string => {
+  if (item.titles?.[lang]) {
+    return item.titles[lang]!;
+  }
   if (item.id && ROUTINE_ITEM_TRANSLATIONS[item.id]?.[lang]) {
     return ROUTINE_ITEM_TRANSLATIONS[item.id][lang];
   }
   if (lang === 'en') return item.titleEn || item.titleAs;
   if (lang === 'as') return item.titleAs || item.titleEn;
-  return item.titleAs || item.titleEn;
+  return item.titles?.as || item.titleAs || item.titles?.en || item.titleEn;
 };
 
 export const INITIAL_REMINDERS: ReminderItem[] = [
@@ -1275,7 +1278,7 @@ export const GUIDANCE_TIP_TRANSLATIONS: Record<string, GuidanceTipLanguageData> 
       mni: 'ꯅꯤꯡꯁꯤꯡ ꯋꯥꯔꯤ (নিংসিং ৱারী)',
     },
     title: {
-      en: 'Reminiscence & Familiar North Eastern Memories',
+      en: 'Reminiscence & Familiar Cultural Memories',
       as: 'পুৰণি স্মৃতি আৰু চিনাকি পৰিৱেশ',
       bn: 'পুরোনো স্মৃতি ও পরিচিত সংস্কৃতি',
       ne: 'पुराना सम्झना र स्थानीय संस्कृति',

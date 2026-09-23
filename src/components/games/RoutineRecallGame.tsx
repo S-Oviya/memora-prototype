@@ -236,12 +236,15 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
         <div className="flex flex-col gap-3">
           {targetItems.map((_, index) => {
             const placed = placedItems[index];
-            const stepLabel =
-              index === 0
-                ? t.games.routine.step1
-                : index === 1
-                ? t.games.routine.step2
-                : t.games.routine.step3;
+            const stepLabels: Record<number, string> = {
+              0: t.games.routine.step1 || 'First',
+              1: t.games.routine.step2 || 'Then',
+              2: t.games.routine.step3 || 'Third',
+              3: (t.games.routine as any).step4 || 'Fourth',
+              4: (t.games.routine as any).step5 || 'Fifth',
+              5: (t.games.routine as any).step6 || 'Sixth',
+            };
+            const stepLabel = stepLabels[index] || `${t.patient.level || 'Step'} ${index + 1}`;
 
             return (
               <div
@@ -275,7 +278,11 @@ export const RoutineRecallGame: React.FC<RoutineRecallGameProps> = ({
                   </div>
                 ) : (
                   <div className="text-gray-400 font-semibold text-base">
-                    {format(t.games.routine.questionWhatNext, { current: stepLabel })}
+                    {index > 0 && placedItems[index - 1]
+                      ? format(t.games.routine.questionWhatNext, {
+                          current: getRoutineItemTitle(placedItems[index - 1], language),
+                        })
+                      : format(t.games.routine.questionWhatNext, { current: stepLabel })}
                   </div>
                 )}
               </div>

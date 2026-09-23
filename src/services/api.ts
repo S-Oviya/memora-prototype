@@ -266,9 +266,14 @@ class ApiService {
       throw new Error('Text cannot be empty.');
     }
 
+    const langCode = language.toLowerCase().split('-')[0].trim();
+    if (langCode === 'mni') {
+      throw new Error("Manipuri ('mni') currently has no open offline pretrained TTS model globally. Please use visual display or audio templates.");
+    }
+
     const payload = JSON.stringify({
       text: cleanedText,
-      language: language.toLowerCase().split('-')[0].trim(),
+      language: langCode,
     });
 
     let res: Response;
@@ -291,7 +296,10 @@ class ApiService {
           body: payload,
         });
       }
-    } catch {
+    } catch (err: any) {
+      if (err instanceof Error && err.message.includes('pretrained TTS model')) {
+        throw err;
+      }
       throw new Error('Local FastAPI TTS server is offline or unreachable. Please ensure the backend is running.');
     }
 
