@@ -68,11 +68,29 @@ export const App: React.FC = () => {
         setAlerts(db.getAlerts());
       }
     };
+    const handleRoutinesUpdated = (e: any) => {
+      if (e.detail) {
+        setRoutines(e.detail);
+      } else {
+        setRoutines(db.getRoutines());
+      }
+    };
+    const handleAttemptsUpdated = (e: any) => {
+      if (e.detail) {
+        setGameAttempts(e.detail);
+      } else {
+        setGameAttempts(db.getGameAttempts());
+      }
+    };
     window.addEventListener('memora_reminders_updated', handleRemindersUpdated as EventListener);
     window.addEventListener('memora_alerts_updated', handleAlertsUpdated as EventListener);
+    window.addEventListener('memora_routines_updated', handleRoutinesUpdated as EventListener);
+    window.addEventListener('memora_attempts_updated', handleAttemptsUpdated as EventListener);
     return () => {
       window.removeEventListener('memora_reminders_updated', handleRemindersUpdated as EventListener);
       window.removeEventListener('memora_alerts_updated', handleAlertsUpdated as EventListener);
+      window.removeEventListener('memora_routines_updated', handleRoutinesUpdated as EventListener);
+      window.removeEventListener('memora_attempts_updated', handleAttemptsUpdated as EventListener);
     };
   }, []);
 
@@ -188,6 +206,7 @@ export const App: React.FC = () => {
           <HealthcareDashboard
             patient={patient}
             gameAttempts={gameAttempts}
+            routines={routines}
             reminders={reminders}
             alerts={alerts}
             onSwitchToPatient={() => handleSwitchRole('patient')}

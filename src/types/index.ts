@@ -47,6 +47,7 @@ export interface RoutineItem {
   period: RoutinePeriod;
   titleEn: string;
   titleAs: string;
+  titles?: Partial<Record<Language, string>>;
   icon: string;
   photoUrl?: string;
   completed?: boolean;

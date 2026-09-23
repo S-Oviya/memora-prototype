@@ -62,9 +62,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, patie
                 <span className="text-xl sm:text-2xl font-black tracking-tight text-sage-900">
                   Memora
                 </span>
-                <span className="text-sm sm:text-base font-semibold text-sage-600 bg-sage-50 px-2 py-0.5 rounded-lg border border-sage-200">
-                  মেমোৰা
-                </span>
               </div>
               <p className="text-[11px] sm:text-xs text-gray-500 hidden xs:block">
                 {getRoleLabel()}

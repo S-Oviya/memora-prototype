@@ -1,5 +1,19 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Heart, ChevronDown, ChevronUp, ShieldAlert, Sparkles, MessageCircle, CalendarCheck, ShieldCheck, Sun, Lightbulb, RefreshCw } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import {
+  Heart,
+  ChevronDown,
+  ChevronUp,
+  ShieldAlert,
+  Sparkles,
+  MessageCircle,
+  CalendarCheck,
+  ShieldCheck,
+  Lightbulb,
+  Volume2,
+  Square,
+  Loader2,
+  AlertCircle
+} from 'lucide-react';
 import { useLanguage } from '../../locales/LanguageContext';
 import {
   CAREGIVER_GUIDANCE_TIPS,
@@ -42,6 +56,30 @@ const PERSONALIZED_INSIGHT_TITLES: Record<Language, string> = {
   mni: 'ꯑꯈꯟꯅꯕ ꯄꯥꯎꯇꯥꯛ ꯑꯃꯁꯨꯡ ꯂꯝꯖꯤꯡꯕ (অখন্নবা পাউতাক)',
 };
 
+const LISTEN_LABELS: Record<Language, { listen: string; stop: string; loading: string; playing: string }> = {
+  en: { listen: 'Listen', stop: 'Stop', loading: 'Generating Voice...', playing: 'Listening...' },
+  as: { listen: 'শুনক', stop: 'বন্ধ কৰক', loading: 'কণ্ঠ প্ৰস্তুত হৈছে...', playing: 'শুনি থকা হৈছে...' },
+  bn: { listen: 'শুনুন', stop: 'থামুন', loading: 'কণ্ঠ তৈরি হচ্ছে...', playing: 'শোনা হচ্ছে...' },
+  ne: { listen: 'सुन्नुहोस्', stop: 'रोक्नुहोस्', loading: 'आवाज तयार हुँदैछ...', playing: 'सुन्दै...' },
+  lus: { listen: 'Ngaithla rawh', stop: 'Tawp rawh', loading: 'Aw siam mek a ni...', playing: 'Ngaithla mek...' },
+  kha: { listen: 'Sngap', stop: 'Sangeh', loading: 'Pynmih sur...', playing: 'Dang sngap...' },
+  ny: { listen: 'Arrka', stop: 'Haka', loading: 'Gennam...', playing: 'Arrka...' },
+  trp: { listen: 'Khna di', stop: 'Tong di', loading: 'Kok tong...', playing: 'Khna tong...' },
+  mni: { listen: 'ꯇꯥꯕꯤꯌꯨ', stop: 'ꯂꯦꯞꯄꯤꯌꯨ', loading: 'ꯈꯣꯟꯊꯣꯛ ꯁꯦꯝꯕ...', playing: 'ꯇꯥꯔꯤ...' },
+};
+
+const LANGUAGE_NAMES: Record<Language, string> = {
+  en: 'English',
+  as: 'Assamese',
+  bn: 'Bengali',
+  ne: 'Nepali',
+  lus: 'Mizo',
+  kha: 'Khasi',
+  ny: 'Nyishi',
+  trp: 'Kokborok',
+  mni: 'Manipuri',
+};
+
 export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   patient,
   attempts,
@@ -52,6 +90,37 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
     const fromDb = db.getPatient();
     return fromDb || (patient as Patient);
   });
+
+  // Audio Playback & TTS state
+  const [activeSpeechId, setActiveSpeechId] = useState<string | null>(null);
+  const [loadingSpeechId, setLoadingSpeechId] = useState<string | null>(null);
+  const [ttsError, setTtsError] = useState<string | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentBlobUrlRef = useRef<string | null>(null);
+
+  // Stop and clean up audio when unmounting or when language changes
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
+    }
+    setActiveSpeechId(null);
+  };
+
+  useEffect(() => {
+    // When caregiver changes language, immediately stop playing prior language audio
+    stopAudio();
+    setTtsError(null);
+    return () => {
+      stopAudio();
+    };
+  }, [caregiverLanguage]);
 
   // Listen to patient update events from DB or other tabs
   useEffect(() => {
@@ -78,7 +147,7 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
   const resolvedPatient = latestDbPatient || patientData || patient;
   // Caregiver's currently selected language is the source of truth for Guidance
   const guidanceLanguage: Language = caregiverLanguage || 'en';
-  const resolvedAttempts = attempts || db.getGameAttempts();
+  const resolvedAttempts = attempts !== undefined ? attempts : db.getGameAttempts();
 
   // Synchronously compute offline insights strictly using the caregiver's selected language
   const aiInsight: AICaregiverInsightResult = useMemo(() => {
@@ -93,6 +162,69 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
     setExpandedId(expandedId === id ? null : id);
   };
 
+  const handlePlayTTS = async (id: string, textToSpeak: string) => {
+    // If currently playing this specific text, click stops it
+    if (activeSpeechId === id) {
+      stopAudio();
+      return;
+    }
+
+    // Prevent concurrent generation clicks
+    if (loadingSpeechId !== null) {
+      return;
+    }
+
+    // Stop any other currently playing audio
+    stopAudio();
+    setTtsError(null);
+
+    const trimmed = textToSpeak.trim();
+    if (!trimmed) {
+      setTtsError('Guidance text is empty.');
+      return;
+    }
+
+    // Truncate to maximum 480 chars to ensure prompt fits comfortably within offline TTS limit
+    const safeText = trimmed.length > 480 ? trimmed.substring(0, 480) + '.' : trimmed;
+
+    setLoadingSpeechId(id);
+    const requestLang = guidanceLanguage;
+
+    try {
+      const blob = await api.synthesizeSpeech(safeText, requestLang);
+
+      // If caregiver switched language while synthesis was running, discard outdated audio
+      if (guidanceLanguage !== requestLang) {
+        return;
+      }
+
+      const audioUrl = URL.createObjectURL(blob);
+      currentBlobUrlRef.current = audioUrl;
+
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        stopAudio();
+      };
+
+      audio.onerror = () => {
+        stopAudio();
+        setTtsError('Browser audio playback failed.');
+      };
+
+      await audio.play();
+      setActiveSpeechId(id);
+    } catch (err: any) {
+      stopAudio();
+      if (err?.name !== 'AbortError') {
+        setTtsError(err?.message || 'Speech generation encountered an error.');
+      }
+    } finally {
+      setLoadingSpeechId(null);
+    }
+  };
+
   const getTipIcon = (iconName: string) => {
     switch (iconName) {
       case 'heart-handshake':
@@ -105,6 +237,12 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
         return <Sparkles className="w-6 h-6 text-rose-700" />;
     }
   };
+
+  const insightSpeechText = aiInsight
+    ? `${PERSONALIZED_INSIGHT_TITLES[guidanceLanguage] || PERSONALIZED_INSIGHT_TITLES.en}. ${aiInsight.summary} ${aiInsight.reason} ${
+        aiInsight.caregiverSuggestions ? aiInsight.caregiverSuggestions.join('. ') : ''
+      }`
+    : '';
 
   return (
     <div className="space-y-6" lang={guidanceLanguage}>
@@ -129,10 +267,33 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
         </div>
       </div>
 
+      {/* TTS Error / Informational Alert Banner */}
+      {ttsError && (
+        <div
+          role="alert"
+          className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex items-start justify-between gap-3 text-amber-950 animate-fadeIn shadow-xs"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">Voice Synthesis Notice</h4>
+              <p className="text-xs mt-0.5 text-amber-800 leading-relaxed">{ttsError}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setTtsError(null)}
+            aria-label="Dismiss notice"
+            className="text-amber-700 hover:text-amber-950 p-1.5 rounded-xl hover:bg-amber-100 transition min-h-[36px] min-w-[36px] flex items-center justify-center font-bold text-sm cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* AI Personalized Dynamic Insights Card */}
       {aiInsight && (
         <div className="bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white rounded-3xl p-6 border-2 border-indigo-200 shadow-sm">
-          <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
                 <Sparkles className="w-5 h-5" />
@@ -146,9 +307,48 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
                 </h3>
               </div>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-              {currentT.caregiver.guidance.ruleBasedBadge}
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                {currentT.caregiver.guidance.ruleBasedBadge}
+              </span>
+
+              {/* Accessible Listen Button for Personalized Guidance */}
+              <button
+                type="button"
+                onClick={() => handlePlayTTS('ai-insight', insightSpeechText)}
+                disabled={loadingSpeechId !== null && loadingSpeechId !== 'ai-insight'}
+                aria-label={
+                  activeSpeechId === 'ai-insight'
+                    ? `Stop playing guidance`
+                    : `Listen to personalized activity guidance in ${LANGUAGE_NAMES[guidanceLanguage] || guidanceLanguage}`
+                }
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl font-bold text-xs transition min-h-[44px] min-w-[44px] shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  activeSpeechId === 'ai-insight'
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200 animate-pulse'
+                    : loadingSpeechId === 'ai-insight'
+                    ? 'bg-indigo-100 text-indigo-700 cursor-wait'
+                    : 'bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200'
+                }`}
+              >
+                {loadingSpeechId === 'ai-insight' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                    <span>{LISTEN_LABELS[guidanceLanguage]?.loading || LISTEN_LABELS.en.loading}</span>
+                  </>
+                ) : activeSpeechId === 'ai-insight' ? (
+                  <>
+                    <Square className="w-4 h-4 fill-white" />
+                    <span>{LISTEN_LABELS[guidanceLanguage]?.stop || LISTEN_LABELS.en.stop}</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-4 h-4 text-indigo-600" />
+                    <span>{LISTEN_LABELS[guidanceLanguage]?.listen || LISTEN_LABELS.en.listen}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <p className="text-sm font-semibold text-gray-800 leading-relaxed mb-3">
@@ -218,17 +418,25 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
           const category = getGuidanceTipCategory(tip, guidanceLanguage);
           const summary = getGuidanceTipSummary(tip, guidanceLanguage);
           const bullets = getGuidanceTipBullets(tip, guidanceLanguage);
+          const tipSpeechText = `${title}. ${summary}. ${bullets ? bullets.join('. ') : ''}`;
+
+          const isCardPlaying = activeSpeechId === tip.id;
+          const isCardLoading = loadingSpeechId === tip.id;
 
           return (
             <div
               key={tip.id}
-              className="bg-white rounded-3xl border-2 border-sage-100 shadow-xs hover:border-sage-300 transition overflow-hidden"
+              className={`bg-white rounded-3xl border-2 transition overflow-hidden ${
+                isCardPlaying ? 'border-sage-400 shadow-md ring-2 ring-sage-200' : 'border-sage-100 shadow-xs hover:border-sage-300'
+              }`}
             >
-              <button
-                onClick={() => toggleExpand(tip.id)}
-                className="w-full text-left p-5 sm:p-6 flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-4">
+              <div className="p-5 sm:p-6 flex items-center justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(tip.id)}
+                  aria-expanded={isExpanded}
+                  className="flex-1 text-left flex items-center gap-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sage-500 rounded-2xl p-1 -m-1"
+                >
                   <div className="w-12 h-12 rounded-2xl bg-warm-100 flex items-center justify-center flex-shrink-0">
                     {getTipIcon(tip.icon)}
                   </div>
@@ -240,12 +448,60 @@ export const CaregiverGuidanceTab: React.FC<CaregiverGuidanceTabProps> = ({
                       {title}
                     </h3>
                   </div>
-                </div>
+                </button>
 
-                <div className="p-2 text-gray-400">
-                  {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Accessible Listen Button for Individual Guidance Tip */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayTTS(tip.id, tipSpeechText);
+                    }}
+                    disabled={loadingSpeechId !== null && !isCardLoading}
+                    aria-label={
+                      isCardPlaying
+                        ? `Stop reading "${title}"`
+                        : `Listen to "${title}" in ${LANGUAGE_NAMES[guidanceLanguage] || guidanceLanguage}`
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition min-h-[44px] min-w-[44px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-sage-500 ${
+                      isCardPlaying
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse shadow-xs'
+                        : isCardLoading
+                        ? 'bg-sage-100 text-sage-700 cursor-wait'
+                        : 'bg-sage-50 hover:bg-sage-100 text-sage-800 border border-sage-200'
+                    }`}
+                  >
+                    {isCardLoading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-sage-600" />
+                        <span className="hidden sm:inline">
+                          {LISTEN_LABELS[guidanceLanguage]?.loading || LISTEN_LABELS.en.loading}
+                        </span>
+                      </>
+                    ) : isCardPlaying ? (
+                      <>
+                        <Square className="w-3.5 h-3.5 fill-white" />
+                        <span>{LISTEN_LABELS[guidanceLanguage]?.stop || LISTEN_LABELS.en.stop}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-sage-600" />
+                        <span>{LISTEN_LABELS[guidanceLanguage]?.listen || LISTEN_LABELS.en.listen}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(tip.id)}
+                    aria-label={isExpanded ? 'Collapse guidance tip' : 'Expand guidance tip'}
+                    className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-50 transition min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                  >
+                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </button>
                 </div>
-              </button>
+              </div>
 
               {isExpanded && (
                 <div className="px-6 pb-6 pt-1 border-t border-gray-100 animate-fadeIn">

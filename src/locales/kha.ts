@@ -1,6 +1,4 @@
-import { en } from './en';
-
-export const kha: typeof en = {
+export const kha = {
   app: {
     name: 'Memora',
     tagline: 'Ka jingpynkynmaw bad pynshait jingmut ia ki tymmen',

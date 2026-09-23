@@ -467,9 +467,75 @@ The long-term vision for Memora is to create a **personalized digital companion 
 
 ## Built With
 
-**React · TypeScript · Vite · Tailwind CSS · Capacitor · Android**
+**React · TypeScript · Vite · Tailwind CSS · FastAPI · PyTorch · ONNX Runtime**
 
-### Planned
+---
 
-**Python · FastAPI · PostgreSQL · Adaptive AI**
+## Offline Multilingual Text-to-Speech (TTS)
+
+Memora includes a 100% offline, locally hosted neural Text-to-Speech service specifically optimized for North Eastern Region (NER) languages, operating on standard commodity CPUs without cloud or GPU requirements.
+
+### Supported Regional Languages & Models
+
+| Language | Code | Model Architecture | Local Model Name | Status |
+| :--- | :---: | :--- | :--- | :---: |
+| **English** | `en` | Meta MMS VITS | `facebook/mms-tts-eng` | Supported |
+| **Assamese** | `as` | Meta MMS VITS | `facebook/mms-tts-asm` | Supported |
+| **Bengali** | `bn` | Meta MMS VITS | `facebook/mms-tts-ben` | Supported |
+| **Nepali** | `ne` | Kala VITS ONNX | `ampixa/real-nepali-v0.2-kala` | Supported |
+| **Mizo** | `lus` | Sulabh VITS | `sulabhkatiyar/indian-ne-multilingual-tts` | Supported |
+| **Nyishi** | `ny` | Sulabh VITS | `sulabhkatiyar/indian-ne-multilingual-tts` | Supported |
+| **Kokborok** | `trp` | Sulabh VITS | `sulabhkatiyar/indian-ne-multilingual-tts` | Supported |
+| **Khasi** | `kha` | *None open* | *No open offline weights available globally* | Handled (503 Informational) |
+
+### Local Model Storage
+Model checkpoints and configurations are stored in the local cache:
+- Meta MMS: `~/.cache/huggingface/hub/models--facebook--mms-tts-*`
+- Sulabh NE Multilingual: `~/.cache/huggingface/hub/models--sulabhkatiyar--indian-ne-multilingual-tts`
+- Kala Nepali ONNX: Local runtime cache (`~/.cache/kala_tts` / site-packages)
+*(Note: Large binary model weights are excluded from Git via `.gitignore`).*
+
+### Required Python Dependencies
+```text
+torch>=2.4.0
+torchaudio>=2.1.0
+transformers>=4.42.0,<4.43.0
+scipy>=1.13.0,<1.14.0
+numpy>=1.26.0,<2.0.0
+soundfile>=0.12.0
+coqui-tts>=0.27.0
+kala-tts>=0.1.4
+onnxruntime>=1.20.0
+```
+
+### Running 100% Offline
+
+1. **Start the FastAPI Backend**:
+   ```powershell
+   # Enforce complete offline isolation
+   $env:HF_HUB_OFFLINE="1"
+   $env:TRANSFORMERS_OFFLINE="1"
+
+   # Run FastAPI server
+   python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+   ```
+
+2. **Start the Frontend UI**:
+   ```powershell
+   npm run dev
+   ```
+
+3. **Testing `/tts` API directly**:
+   ```powershell
+   curl -X POST "http://localhost:8000/tts" `
+     -H "Content-Type: application/json" `
+     -d '{"text": "Hello, how are you feeling today?", "language": "en"}' `
+     --output speech.wav
+   ```
+
+4. **License & Attributions**:
+   - Meta MMS models: CC-BY-NC 4.0.
+   - Kala TTS & ONNX Nepali runtime: Apache 2.0.
+   - Sulabh NE Multilingual model: Open-source research checkpoint.
+
 

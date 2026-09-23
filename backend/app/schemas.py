@@ -254,3 +254,7 @@ class SyncBootstrapRequest(BaseModel):
 
     class Config:
         populate_by_name = True
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., description="Text to synthesize to speech")
+    language: str = Field(default="en", description="Language code (en, as, bn, ne, lus, kha, ny, trp)")

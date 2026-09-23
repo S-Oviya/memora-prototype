@@ -108,15 +108,20 @@ export class OfflineInsightsService {
       return SKILL_LABELS[skill]?.[lang] || SKILL_LABELS[skill]?.en || skill;
     };
 
-    const strongestLabel = getSkillLabel(strongestSkill);
-    const practiceLabel = getSkillLabel(practiceSkill);
-    const strongestScore = analytics.cognitiveScores[strongestSkill] || 85;
+    const isNewUser = attempts.length === 0;
+    const strongestLabel = isNewUser
+      ? (lang === 'as' ? 'এতিয়ালৈকে নাই' : lang === 'bn' ? 'এখনো নেই' : lang === 'ne' ? 'अहिलेसम्म छैन' : 'None yet')
+      : getSkillLabel(strongestSkill);
+    const practiceLabel = isNewUser
+      ? (lang === 'as' ? 'এতিয়ালৈকে নাই' : lang === 'bn' ? 'এখনো নেই' : lang === 'ne' ? 'अहिलेसम्म छैन' : 'None yet')
+      : getSkillLabel(practiceSkill);
+    const strongestScore = analytics.cognitiveScores[strongestSkill] || 0;
 
     const recent = attempts.slice(-5);
     const avgResponseTime =
       recent.length > 0
         ? Math.round(recent.reduce((sum, a) => sum + (a.timeTakenSeconds || 0), 0) / recent.length)
-        : 25;
+        : 0;
 
     let summary = '';
     let reason = '';
@@ -296,23 +301,38 @@ export class OfflineInsightsService {
 
       default: // 'en'
         if (attempts.length === 0) {
-          summary = `Welcome to Memora. Initial gentle activities at Level 1 recommended to build comfort and familiarity for ${patientName}.`;
+          summary = `Welcome to Memora. No games played yet. Initial gentle activities at Level 1 recommended to build comfort and familiarity for ${patientName}.`;
           reason = `On-device neural network initialized safe starting levels without requiring internet connection.`;
+          caregiverSuggestions = [
+            'Allow comfortable unhurried time for answering questions when beginning activities.',
+            'Validate emotional comfort rather than accuracy; avoid pointing out mistakes.',
+            'Pair short gameplay sessions with soothing family memories, tea, or gentle traditional flute melodies.',
+          ];
         } else if (isPromotion) {
           summary = `${patientName} demonstrates strong engagement and steady confidence in ${strongestLabel} (${strongestScore}%). The local cognitive model gently progressed challenge to Level ${recommendedLevel}.`;
           reason = `Local on-device neural model selected Level ${recommendedLevel} (${Math.round(confidence * 100)}% certainty) without needing internet or cloud APIs.`;
+          caregiverSuggestions = [
+            `Allow comfortable unhurried time for answering questions (current average: ${avgResponseTime}s).`,
+            'Validate emotional comfort rather than accuracy; avoid pointing out mistakes.',
+            'Pair short gameplay sessions with soothing family memories, tea, or gentle traditional flute melodies.',
+          ];
         } else if (isDemotion) {
           summary = `Mild hesitation detected during recent sessions. Difficulty was automatically simplified to Level ${recommendedLevel} to prevent frustration and preserve comfort.`;
           reason = `On-device cognitive model automatically eased challenge to Level ${recommendedLevel} (${Math.round(confidence * 100)}% confidence).`;
+          caregiverSuggestions = [
+            `Allow comfortable unhurried time for answering questions (current average: ${avgResponseTime}s).`,
+            'Validate emotional comfort rather than accuracy; avoid pointing out mistakes.',
+            'Pair short gameplay sessions with soothing family memories, tea, or gentle traditional flute melodies.',
+          ];
         } else {
           summary = `${strongestLabel} shows consistent engagement (${strongestScore}%). Continued gentle practice in ${practiceLabel} will maintain reassuring cognitive stimulation.`;
           reason = `Local on-device neural model selected Level ${recommendedLevel} (${Math.round(confidence * 100)}% certainty) without needing internet or cloud APIs.`;
+          caregiverSuggestions = [
+            `Allow comfortable unhurried time for answering questions (current average: ${avgResponseTime}s).`,
+            'Validate emotional comfort rather than accuracy; avoid pointing out mistakes.',
+            'Pair short gameplay sessions with soothing family memories, tea, or gentle traditional flute melodies.',
+          ];
         }
-        caregiverSuggestions = [
-          `Allow comfortable unhurried time for answering questions (current average: ${avgResponseTime}s).`,
-          'Validate emotional comfort rather than accuracy; avoid pointing out mistakes.',
-          'Pair short gameplay sessions with soothing family memories, tea, or gentle traditional flute melodies.',
-        ];
         break;
     }
 

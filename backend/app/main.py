@@ -76,7 +76,7 @@ def health_check():
         "version": "2.0.0",
         "database": "sqlite",
         "geminiConfigured": api_key_present,
-        "supportedVoices": ["en", "as", "bn", "ne"]
+        "supportedVoices": ["en", "as", "bn", "ne", "lus", "ny", "trp"]
     }
 
 def seed_database_if_empty():
@@ -300,18 +300,7 @@ def seed_database_if_empty():
             ]
             db.add_all(alerts_data)
 
-            # Initial Attempts
-            sample_attempts = [
-                GameAttempt(id="att-1", patient_id="patient-ramesh-1", game_id="photo-puzzle", cognitive_skill="problem_solving", level=1, score=95, mistakes_count=1, success=True, time_taken_seconds=32, timestamp=datetime.utcnow()),
-                GameAttempt(id="att-2", patient_id="patient-ramesh-1", game_id="familiar-faces", cognitive_skill="recognition", level=1, score=100, mistakes_count=0, success=True, time_taken_seconds=18, timestamp=datetime.utcnow()),
-                GameAttempt(id="att-3", patient_id="patient-ramesh-1", game_id="familiar-voices", cognitive_skill="recognition", level=1, score=90, mistakes_count=1, success=True, time_taken_seconds=24, timestamp=datetime.utcnow()),
-                GameAttempt(id="att-4", patient_id="patient-ramesh-1", game_id="routine-recall", cognitive_skill="recall", level=1, score=100, mistakes_count=0, success=True, time_taken_seconds=28, timestamp=datetime.utcnow()),
-                GameAttempt(id="att-5", patient_id="patient-ramesh-1", game_id="photo-puzzle", cognitive_skill="problem_solving", level=2, score=85, mistakes_count=2, success=True, time_taken_seconds=45, timestamp=datetime.utcnow()),
-                GameAttempt(id="att-6", patient_id="patient-ramesh-1", game_id="odd-one-out", cognitive_skill="categorization", level=1, score=80, mistakes_count=1, success=True, time_taken_seconds=25, timestamp=datetime.utcnow()),
-                GameAttempt(id="att-7", patient_id="patient-ramesh-1", game_id="matching-family", cognitive_skill="associative_memory", level=1, score=85, mistakes_count=1, success=True, time_taken_seconds=20, timestamp=datetime.utcnow()),
-            ]
-            db.add_all(sample_attempts)
-
+            # Do not seed fake initial game attempts. New patients must start with 0 games played.
             db.commit()
             print("[Memora] Demo database seeded successfully.")
     except Exception as e:

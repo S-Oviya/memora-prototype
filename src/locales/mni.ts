@@ -1,6 +1,4 @@
-import { en } from './en';
-
-export const mni: typeof en = {
+export const mni = {
   app: {
     name: 'ꯃꯦꯃꯣꯔꯥ (মেমোরা)',
     tagline: 'ꯑꯍꯜ-ꯂꯃꯟꯁꯤꯡꯒꯤ ꯋꯥꯈꯜ ꯑꯃꯁꯨꯡ ꯅꯤꯡꯁꯤꯡꯕ ꯆꯦꯠꯁꯤꯂꯍꯟꯅꯕ ꯃꯇꯦꯡ',

@@ -14,10 +14,16 @@ def get_recommendation(patient_id: str, db: Session = Depends(get_db)):
     rec_game = analytics["recommendedActivity"]
     rec_level = analytics["recommendedLevel"]
 
+    practice = analytics["practiceArea"]
+    if practice == "none" or analytics["totalAttempts"] == 0:
+        reason = f"No games played yet. Starting baseline recommendation set to {rec_game.replace('-', ' ').title()} at Level {rec_level}."
+    else:
+        reason = f"Recommended activity targeting {practice.replace('_', ' ')} at comfortable Level {rec_level}."
+
     return AIRecommendationResponse(
         recommendedGame=rec_game,
         recommendedLevel=rec_level,
-        reason=f"Recommended activity targeting {analytics['practiceArea'].replace('_', ' ')} at comfortable Level {rec_level}.",
+        reason=reason,
         confidence=0.86,
         isAiPowered=False
     )

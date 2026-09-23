@@ -118,6 +118,9 @@ class DatabaseService {
   saveRoutines(routines: RoutineItem[]): void {
     try {
       localStorage.setItem(KEYS.ROUTINES, JSON.stringify(routines));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('memora_routines_updated', { detail: routines }));
+      }
     } catch (e) {
       console.error('Failed to save routines', e);
     }
@@ -129,9 +132,37 @@ class DatabaseService {
     this.saveRoutines(list);
   }
 
+  updateRoutine(routine: RoutineItem): void {
+    const list = this.getRoutines().map(r => (r.id === routine.id ? routine : r));
+    this.saveRoutines(list);
+  }
+
+  reorderRoutines(routines: RoutineItem[]): void {
+    const normalized = routines.map((r, idx) => ({
+      ...r,
+      order: idx + 1,
+    }));
+    this.saveRoutines(normalized);
+  }
+
+  toggleRoutineCompleted(id: string, completed?: boolean): void {
+    const list = this.getRoutines().map(r => {
+      if (r.id === id) {
+        const nextState = completed !== undefined ? completed : !r.completed;
+        return {
+          ...r,
+          completed: nextState,
+        };
+      }
+      return r;
+    });
+    this.saveRoutines(list);
+  }
+
   deleteRoutine(id: string): void {
     const list = this.getRoutines().filter(r => r.id !== id);
-    this.saveRoutines(list);
+    const reordered = list.map((r, idx) => ({ ...r, order: idx + 1 }));
+    this.saveRoutines(reordered);
   }
 
   // --- Reminders ---
@@ -310,102 +341,19 @@ class DatabaseService {
         if (data !== null) {
           const parsed = JSON.parse(data);
           if (Array.isArray(parsed)) {
-            return parsed;
+            const FAKE_ATTEMPT_IDS = new Set(['att-1', 'att-2', 'att-3', 'att-4', 'att-5', 'att-6', 'att-7']);
+            const realAttempts = parsed.filter((a: GameAttempt) => a && a.id && !FAKE_ATTEMPT_IDS.has(a.id));
+            if (realAttempts.length !== parsed.length) {
+              this.saveGameAttempts(realAttempts);
+            }
+            return realAttempts;
           }
         }
       }
     } catch (e) {
       console.error('Failed to load game attempts', e);
     }
-    // Return sample initial history for demonstration of charts
-    const initialAttempts: GameAttempt[] = [
-      {
-        id: 'att-1',
-        patientId: 'patient-ramesh-1',
-        gameId: 'photo-puzzle',
-        cognitiveSkill: 'problem_solving',
-        level: 1,
-        success: true,
-        score: 95,
-        timeTakenSeconds: 32,
-        mistakesCount: 1,
-        timestamp: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'att-2',
-        patientId: 'patient-ramesh-1',
-        gameId: 'familiar-faces',
-        cognitiveSkill: 'recognition',
-        level: 1,
-        success: true,
-        score: 100,
-        timeTakenSeconds: 18,
-        mistakesCount: 0,
-        timestamp: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'att-3',
-        patientId: 'patient-ramesh-1',
-        gameId: 'familiar-voices',
-        cognitiveSkill: 'recognition',
-        level: 1,
-        success: true,
-        score: 90,
-        timeTakenSeconds: 24,
-        mistakesCount: 1,
-        timestamp: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'att-4',
-        patientId: 'patient-ramesh-1',
-        gameId: 'routine-recall',
-        cognitiveSkill: 'recall',
-        level: 1,
-        success: true,
-        score: 100,
-        timeTakenSeconds: 28,
-        mistakesCount: 0,
-        timestamp: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'att-5',
-        patientId: 'patient-ramesh-1',
-        gameId: 'photo-puzzle',
-        cognitiveSkill: 'problem_solving',
-        level: 2,
-        success: true,
-        score: 85,
-        timeTakenSeconds: 45,
-        mistakesCount: 2,
-        timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'att-6',
-        patientId: 'patient-ramesh-1',
-        gameId: 'odd-one-out',
-        cognitiveSkill: 'categorization',
-        level: 1,
-        success: true,
-        score: 80,
-        timeTakenSeconds: 25,
-        mistakesCount: 1,
-        timestamp: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'att-7',
-        patientId: 'patient-ramesh-1',
-        gameId: 'matching-family',
-        cognitiveSkill: 'associative_memory',
-        level: 1,
-        success: true,
-        score: 85,
-        timeTakenSeconds: 20,
-        mistakesCount: 1,
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      },
-    ];
-    this.saveGameAttempts(initialAttempts);
-    return initialAttempts;
+    return [];
   }
 
   saveGameAttempts(attempts: GameAttempt[]): void {
@@ -429,6 +377,9 @@ class DatabaseService {
     const current = this.getGameAttempts();
     current.push(fullAttempt);
     this.saveGameAttempts(current);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('memora_attempts_updated', { detail: current }));
+    }
     return fullAttempt;
   }
 
@@ -512,6 +463,7 @@ class DatabaseService {
     this.saveReminders(INITIAL_REMINDERS);
     this.saveAlerts(INITIAL_ALERTS);
     this.saveMusicTracks(INITIAL_MUSIC);
+    this.saveGameAttempts([]);
   }
 }
 

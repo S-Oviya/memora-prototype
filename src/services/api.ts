@@ -259,6 +259,65 @@ class ApiService {
   getTTSAudioUrl(text: string, lang: string): string {
     return `${API_BASE}/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}`;
   }
+
+  async synthesizeSpeech(text: string, language: string): Promise<Blob> {
+    const cleanedText = text.trim();
+    if (!cleanedText) {
+      throw new Error('Text cannot be empty.');
+    }
+
+    const langCode = language.toLowerCase().split('-')[0].trim();
+    if (langCode === 'mni') {
+      throw new Error("Manipuri ('mni') currently has no open offline pretrained TTS model globally. Please use visual display or audio templates.");
+    }
+
+    const payload = JSON.stringify({
+      text: cleanedText,
+      language: langCode,
+    });
+
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'audio/wav',
+        },
+        body: payload,
+      });
+      if (res.status === 404) {
+        res = await fetch(`${API_BASE}/api/tts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'audio/wav',
+          },
+          body: payload,
+        });
+      }
+    } catch (err: any) {
+      if (err instanceof Error && err.message.includes('pretrained TTS model')) {
+        throw err;
+      }
+      throw new Error('Local FastAPI TTS server is offline or unreachable. Please ensure the backend is running.');
+    }
+
+    if (!res.ok) {
+      let errorDetail = 'Speech generation failed.';
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.detail) {
+          errorDetail = typeof errJson.detail === 'string' ? errJson.detail : JSON.stringify(errJson.detail);
+        }
+      } catch {
+        errorDetail = `Server returned status ${res.status}.`;
+      }
+      throw new Error(errorDetail);
+    }
+
+    return await res.blob();
+  }
 }
 
 export const api = new ApiService();

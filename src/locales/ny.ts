@@ -1,6 +1,4 @@
-import { en } from './en';
-
-export const ny: typeof en = {
+export const ny = {
   app: {
     name: 'Memora',
     tagline: 'Nyishi nyalo miding agan mingminam agan',

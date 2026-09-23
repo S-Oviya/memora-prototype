@@ -32,3 +32,6 @@ backend/*.db
 __pycache__/
 *.pyc
 memora.db
+tts_research/
+*.wav
+*.mp3

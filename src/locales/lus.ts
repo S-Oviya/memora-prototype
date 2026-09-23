@@ -1,10 +1,8 @@
-import { en } from './en';
-
-export const lus: typeof en = {
+export const lus = {
   app: {
     name: 'Memora',
     tagline: 'Upate tana thluak chawhphurna leh hriatrengna puihtu',
-    subtitle: 'Smart India Hackathon SIH26003 - Hmarchhak Bial',
+    subtitle: 'Upa te tana hriatna chhawmdawlna leh enkawlna',
     roleCaregiver: 'Enkawltu Hmun',
     rolePatient: 'Upa te Chenna Hmun',
     switchToPatient: 'Upate hmuna kal rawh',
@@ -28,12 +26,12 @@ export const lus: typeof en = {
   },
   auth: {
     title: 'Memora-ah kan lo lawm a che',
-    welcomeSubtitle: 'Hmarchhak biala upa, hriatna hloh mekte tana hmangaihna nena duan a ni.',
+    welcomeSubtitle: 'Upa te leh an chhungte tana hriatna tihchakna leh puihna.',
     caregiverRoleDesc: 'Damlo chanchin, chhungkaw thlalak, aw leh nitin thiltih te enkawl rawh.',
     patientRoleDesc: 'Thlalak leh aw hriatthan hmanga hahdam taka infiamna hmun nuam.',
     continueAsCaregiver: 'Enkawltu angin lut rawh',
     continueAsPatient: 'Upa angin infiam rawh',
-    demoNotice: 'Entirna chanchin siam sa: Ramesh Chandra Baruah.',
+    demoNotice: 'Profile: Ramesh Chandra Baruah',
   },
   patient: {
     greetingMorning: 'Chibai zing chawhma',
