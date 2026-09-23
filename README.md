@@ -1,541 +1,497 @@
 # Memora
 
-### A dementia-friendly digital companion for meaningful cognitive engagement
+## AI-Powered Cognitive Gaming and Memory Assistance Platform for Elderly Dementia Patients
 
-Memora is a digital companion designed to make cognitive activities **simple, familiar, engaging, and accessible** for people living with dementia.
+Memora is an **offline-first cognitive assistance platform** designed to support elderly people with dementia through personalized cognitive games, memory activities, familiar content, multilingual voice assistance, and caregiver-guided personalization.
 
-Instead of relying on text-heavy interfaces or complicated navigation, Memora uses a **visual-first experience** built around familiar images, simple interactions, and personalized activities.
-
-The platform brings together two connected experiences:
-
-* **Patient Companion** — provides simple cognitive and routine-based activities.
-* **Caretaker Console** — allows caretakers to personalize the experience with content that is familiar and meaningful to the patient.
+The platform provides dedicated experiences for **elderly users, caregivers, and healthcare workers**, while using lightweight local AI/ML to personalize activities and adapt difficulty.
 
 ---
 
-## The Problem
+## Key Features
 
-Dementia can affect memory, recognition, orientation, and the ability to follow complex instructions.
+### Elderly User Portal
 
-Many digital applications designed for general users can become difficult to use when they depend on:
+Memora provides a simple, accessible interface designed for elderly users.
 
-* Large amounts of text
-* Complex navigation
-* Multiple steps
-* Unfamiliar interfaces
-* Generic activities that are not personally meaningful
+Users can:
 
-Caretakers also need a simple way to incorporate the patient's own memories, routines, and familiar content into everyday activities.
+* Play cognitive games
+* Complete personalized memory activities
+* View familiar photos and people
+* Listen to personalized audio
+* Receive spoken activity instructions
+* Follow daily routines
+* Select their preferred language
+* Repeat activities for memory reinforcement
+* Interact with activities at an adaptive difficulty level
 
-### Our Goal
-
-Memora aims to bridge this gap by creating an interface that is:
-
-**Simple enough to use. Familiar enough to feel comfortable. Personal enough to matter.**
-
----
-
-# How Memora Works
-
-Memora has two primary sides.
-
-```text
-                    MEMORA
-                       │
-             ┌─────────┴─────────┐
-             │                   │
-        CARETAKER             PATIENT
-             │                   │
-             ↓                   ↓
-    Personalize content      Start activities
-             │                   │
-      ┌──────┼──────┐       ┌────┼──────────┐
-      ↓      ↓      ↓       ↓    ↓          ↓
-   Photos  Routines  Info  Puzzle Shape   Routine &
-                          Game   Game    Orientation
-      │                   │
-      └──────────┬────────┘
-                 ↓
-       Personalized experience
-```
-
-The caretaker provides familiar information and content, while the patient interacts with that content through simple activities.
+The interface focuses on **large text, clear visuals, simple navigation, and minimal interaction complexity**.
 
 ---
 
-# Caretaker Console
+## Cognitive Games
 
-The Caretaker Console is designed to give caregivers control over the patient's experience.
+Memora includes multiple interactive games designed to exercise different cognitive abilities.
 
-Instead of using only predefined content, Memora allows the experience to be personalized around the individual.
+### Shape Game
 
-### Caretakers can provide
+A visual shape-based activity where users identify, match, or interact with shapes.
 
-* Familiar photographs
-* Personal information
+It focuses on:
+
+* Visual recognition
+* Attention
+* Cognitive processing
+* Simple decision-making
+
+### Memory Matching
+
+Users match related cards or images to exercise:
+
+* Recognition
+* Visual memory
+* Recall
+* Attention
+
+### Sequence Activities
+
+Users remember and reproduce sequences to exercise:
+
+* Working memory
+* Attention
+* Sequential recall
+
+### Image Recognition
+
+Users identify familiar images, people, or objects.
+
+The activity can incorporate personalized content provided by caregivers.
+
+### Word Activities
+
+Simple word-based activities support:
+
+* Word recognition
+* Recall
+* Language-related cognition
+* Attention
+
+### Recall Activities
+
+Users interact with prompts based on familiar information, people, objects, or memories.
+
+### Attention Activities
+
+Simple visual interactions encourage focus and sustained attention.
+
+### Personalized Activities
+
+The activity experience can be adapted according to:
+
+* User preferences
+* Previous interactions
+* Performance
+* Difficulty level
+* Repetition requirements
+* Caregiver configuration
+
+---
+
+# Personalized Memory Assistance
+
+Memora goes beyond generic cognitive games by allowing activities to incorporate information that is familiar to the individual.
+
+Caregivers can provide:
+
+* Family photographs
+* Familiar people
+* Personal memories
+* Familiar objects
+* Music
+* Voice recordings
 * Daily routines
-* Other content that can be incorporated into activities
+* Personal preferences
 
-This creates an environment where activities can be based on **things the patient already knows and recognizes**.
-
----
-
-# Patient Companion
-
-The Patient Companion focuses on simple, visual interactions that require minimal reading and navigation.
-
-The current experience includes three major activity concepts.
+This allows cognitive activities to be connected to the user's own environment and experiences.
 
 ---
 
-## 1. Memory Puzzle
+# Adaptive Difficulty
 
-The Memory Puzzle allows photographs provided by the caretaker to become part of a puzzle activity.
+Memora does not provide exactly the same difficulty to every user.
 
-This means the patient can interact with images that may represent:
-
-* Family members
-* Familiar places
-* Important moments
-* Everyday surroundings
-* Other personally meaningful photographs
-
-### Flow
+The platform combines a lightweight local ML model with an **Adaptive Difficulty Engine** to personalize the activity experience.
 
 ```text
-Caretaker uploads image
-        ↓
-Image becomes activity content
-        ↓
-Patient opens Memory Puzzle
-        ↓
-Patient completes the puzzle
+User Interaction
+       ↓
+Activity Data
+       ↓
+Local ML Model
+       ↓
+Adaptive Difficulty Engine
+       ↓
+Personalized Activity
+       ↓
+Next Interaction
 ```
 
-Using familiar photographs makes the activity more personal than using completely generic puzzle images.
+The system can adjust activity difficulty based on interaction patterns and performance.
+
+A **rule-based fallback** is also included to maintain reliable behavior when the ML model cannot provide a suitable output.
 
 ---
 
-## 2. Shape Matching
+# Caregiver Portal
 
-Shape Matching is a simple drag-and-drop activity.
+The Caregiver Portal allows family members or caregivers to configure and manage the elderly user's experience.
 
-The patient is presented with a canvas containing different shaped spaces and matching shapes outside the canvas.
+### Caregiver Setup
 
-The goal is to drag each shape into its corresponding space.
+Caregivers can configure:
+
+* User profile
+* Dementia stage/type
+* Preferred language
+* Daily routine
+* Interests
+* Preferences
+* Familiar people
+* Photos
+* Audio content
+* Music
+* Activity preferences
+* Difficulty settings
+
+### Caregiver Dashboard
+
+The dashboard provides an overview of the user's interaction with Memora.
+
+Caregivers can monitor information such as:
+
+* Activities completed
+* Activity performance
+* Difficulty progression
+* Frequently used activities
+* Interaction history
+* Areas requiring additional support
+* Personalization trends
+
+The elderly user's experience is designed around **support and engagement rather than competitive scoring**.
+
+---
+
+# Healthcare Worker Portal
+
+Memora also provides a dedicated portal for healthcare workers.
+
+The healthcare-worker portal provides a structured view of relevant user activity and progress information.
+
+Healthcare workers can review:
+
+* User information
+* Cognitive activity history
+* Activity performance
+* Progress trends
+* Caregiver-provided information
+* Personalization and difficulty changes
+
+This creates a connection between **home-based cognitive activities, caregivers, and healthcare monitoring**.
+
+Memora is intended as a supportive technology platform and does not replace professional medical diagnosis or treatment.
+
+---
+
+# 9-Language Support
+
+Memora is designed for **9-language support**, with multilingual content and audio assistance.
+
+The platform is designed to make cognitive activities accessible to elderly users who may be more comfortable using their native or preferred language.
+
+Language support covers:
+
+* Interface/content
+* Activity instructions
+* Prompts
+* Voice assistance
+* Text-to-Speech
+* Personalized interactions
+
+The architecture is designed to support language-specific content and locally available voice models.
+
+---
+
+# Offline Voice Assistance
+
+Memora includes **offline Text-to-Speech (TTS)** so that activity instructions and supported content can be presented through voice.
+
+### TTS Pipeline
 
 ```text
-        Shapes
-
-       ●    ▲    ■
-
-             ↓
-          Drag & Drop
-
-    ┌─────────────────┐
-    │       ○         │
-    │           △     │
-    │   □             │
-    └─────────────────┘
+Activity / Text
+      ↓
+Local TTS Model
+      ↓
+Generated WAV Audio
+      ↓
+Audio Playback
 ```
 
-The activity focuses on visual recognition and straightforward physical interaction.
+The system uses:
 
-There is no complicated sequence of actions — the patient simply **recognizes, moves, and matches**.
+* Coqui TTS / Local TTS Models
+* Python
+* FastAPI
+* Local model execution
+* WAV audio generation
+
+This allows voice assistance to function without requiring every request to be sent to a cloud-based speech service.
 
 ---
 
-## 3. Routine & Orientation
+# Offline AI / ML
 
-The Routine & Orientation activity presents questions based on familiar routines or basic personal information.
+Memora uses a lightweight neural network for local personalization.
 
-Instead of requiring the patient to type an answer, choices can be represented visually.
-
-For example:
+### Neural Network Architecture
 
 ```text
-What do you usually do in the morning?
-
-   🥣             🛏️
-
- Breakfast       Sleep
-
-   🌳             📺
-
- Go outside      Watch TV
+Input Features
+      ↓
+   8 Neurons
+      ↓
+  16 Neurons
+      ↓
+   5 Outputs
+      ↓
+Activity Personalization
 ```
 
-The emphasis is on **recognition rather than reading or typing**.
+### ML Components
 
-This allows routine-based questions to be presented in a way that is easier to understand and interact with.
+* Custom Lightweight MLP
+* 8 → 16 → 5 architecture
+* Local model storage
+* Adaptive Difficulty Engine
+* Offline inference
+* Rule-based fallback
+
+The lightweight architecture is intended to keep personalization practical for an offline-first application.
 
 ---
 
-# Design Principles
+# Offline-First Architecture
 
-Memora is built around a few core principles.
+Memora is designed so that core functionality can continue to work with limited or no internet connectivity.
 
-## Visual First
+```text
+                 ┌──────────────────────┐
+                 │    Elderly Portal     │
+                 │ Games • Memory • TTS  │
+                 └──────────┬───────────┘
+                            │
+                            ↓
+                 ┌──────────────────────┐
+                 │ Local AI / ML Engine │
+                 │ + Adaptive Difficulty│
+                 └──────────┬───────────┘
+                            │
+             ┌──────────────┼──────────────┐
+             ↓              ↓              ↓
+        Local Data       Local TTS    Game Engine
+             │              │              │
+             └──────────────┼──────────────┘
+                            ↓
+                 ┌──────────────────────┐
+                 │   Caregiver Portal   │
+                 └──────────┬───────────┘
+                            ↓
+                 ┌──────────────────────┐
+                 │ Healthcare Worker    │
+                 │       Portal         │
+                 └──────────────────────┘
+```
 
-Images, icons, shapes, and visual choices are prioritized over large amounts of text.
+Local components include:
 
-## Simple Interaction
+* User preferences
+* Activity data
+* ML model
+* Personalization logic
+* Familiar content
+* Photos
+* Audio recordings
+* TTS models
+* Generated audio
 
-Activities are based on familiar interactions such as:
+---
 
-* Tap
-* Select
-* Drag
-* Match
-* Recognize
+# Elder-Friendly Design
 
-## Familiarity
+Memora is designed specifically with elderly users in mind.
 
-Personal photographs and routine-based content can make activities more recognizable to the patient.
+The interface emphasizes:
 
-## Low Cognitive Load
+* Large readable text
+* Clear buttons
+* Simple navigation
+* Familiar visuals
+* Minimal steps
+* Audio instructions
+* Reduced visual complexity
+* Simple interaction patterns
 
-The interface avoids unnecessary navigation and complicated instructions.
+The goal is to reduce the complexity normally associated with smartphone applications.
 
-## Personalization
+---
 
-The experience is designed around the individual rather than assuming that every patient will respond to the same activities.
+# Privacy
+
+Memora follows a local-first approach for personal content.
+
+Content such as:
+
+* Family photos
+* Voice recordings
+* Personal preferences
+* Memory-related information
+* Activity data
+
+is designed to be handled locally wherever possible.
+
+This reduces unnecessary dependence on external cloud services for core functionality.
 
 ---
 
 # Technology Stack
 
+| Component       | Technology                   |
+| --------------- | ---------------------------- |
+| Frontend        | React                        |
+| Language        | TypeScript                   |
+| Build Tool      | Vite                         |
+| UI / Styling    | Tailwind CSS                 |
+| Local Storage   | Browser LocalStorage         |
+| Cognitive Games | React + TypeScript           |
+| Audio Recording | MediaRecorder API            |
+| Audio Playback  | Web Audio API                |
+| Offline AI/ML   | Custom Lightweight MLP       |
+| ML Architecture | 8 → 16 → 5 Neural Network    |
+| Model Storage   | Local JSON                   |
+| Personalization | Adaptive Difficulty Engine   |
+| Offline TTS     | Coqui TTS / Local TTS Models |
+| TTS Backend     | Python + FastAPI             |
+| Voice Output    | WAV Audio                    |
+| Architecture    | Offline-first                |
+
+---
+
+# Project Structure
+
+```text
+memora/
+│
+├── src/
+│   ├── components/
+│   ├── games/
+│   ├── ml/
+│   ├── personalization/
+│   ├── pages/
+│   └── ...
+│
+├── backend/
+│   ├── app/
+│   ├── models/
+│   └── requirements.txt
+│
+├── public/
+├── package.json
+├── vite.config.ts
+└── README.md
+```
+
+---
+
+# Getting Started
+
 ## Frontend
 
-* **React** — UI development
-* **TypeScript** — type-safe application development
-* **Vite** — frontend development and build tooling
-* **Tailwind CSS** — responsive and consistent styling
-
-## Mobile
-
-* **Capacitor** — bridges the web application with native mobile capabilities
-* **Android** — target mobile platform
-
-## Planned Backend
-
-* **Python**
-* **FastAPI**
-
-The backend will provide the foundation for persistent application data and communication between the client and server.
-
-## Planned Database
-
-* **PostgreSQL**
-
-PostgreSQL is planned for storing structured application data such as patient-related information, caretaker content, activity data, and other persistent records.
-
-## Planned AI
-
-Memora is designed to eventually incorporate AI for:
-
-* **Adaptive difficulty** — adjusting activity difficulty based on patient interaction
-* **Personalized game recommendations** — recommending activities based on individual engagement and preferences
-
----
-
-# Core Focus
-
-### Dementia-Friendly UI
-
-The interface is designed around accessibility and simplicity rather than conventional information-dense application design.
-
-Key considerations include:
-
-* Large interactive elements
-* Clear visual hierarchy
-* Minimal text
-* Simple navigation
-* Familiar visual cues
-* Straightforward interactions
-
-### Offline-First Gameplay
-
-Memora is designed with offline accessibility in mind.
-
-Core activities should remain usable even when a reliable internet connection is unavailable.
-
-This is particularly important for activities that should be available whenever the patient needs them, without depending entirely on network connectivity.
-
-### Multilingual Support
-
-Memora is designed to support multiple languages so that patients and caretakers can interact with the application in a language they are comfortable with.
-
-This can make the experience more accessible across different families and regions.
-
----
-
-# Application Flow
-
-```text
-                         MEMORA
-                            │
-             ┌──────────────┴──────────────┐
-             │                             │
-             ▼                             ▼
-     CARETAKER CONSOLE              PATIENT COMPANION
-             │                             │
-             │                             ▼
-             │                      Choose Activity
-             │                             │
-             │              ┌──────────────┼──────────────┐
-             │              │              │              │
-             │              ▼              ▼              ▼
-             │         Memory Puzzle  Shape Matching  Routine &
-             │                                           Orientation
-             │
-             ▼
-      Add Personal Content
-             │
-             ├── Photos
-             ├── Routines
-             └── Personal Information
-             │
-             └───────────────► Personalized Activities
+```bash
+npm install
+npm run dev
 ```
 
----
+## TTS Backend
 
-# Architecture
-
-The current application is centered around the React frontend.
-
-```text
-┌───────────────────────────────────────┐
-│              React App                │
-│              TypeScript               │
-│                                       │
-│  ┌─────────────┐   ┌───────────────┐ │
-│  │  Caretaker  │   │    Patient    │ │
-│  │   Console   │   │   Companion   │ │
-│  └─────────────┘   └───────────────┘ │
-│          │                 │           │
-│          └────────┬────────┘           │
-│                   │                    │
-│             Activity Layer             │
-│                   │                    │
-│       ┌───────────┼───────────┐        │
-│       │           │           │        │
-│    Memory       Shape      Routine     │
-│    Puzzle      Matching   Orientation  │
-└───────────────────────────────────────┘
-                    │
-                    ▼
-              Capacitor
-                    │
-                    ▼
-                 Android
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-The planned architecture extends this with a backend and database:
-
-```text
-React + TypeScript
-        │
-        ▼
-     Capacitor
-        │
-        ▼
-      Android
-
-        │
-        │ API
-        ▼
-
-    FastAPI Backend
-        │
-        ▼
-    PostgreSQL
-        │
-        ▼
- Patient & Activity Data
-```
-
-AI capabilities can later operate on activity and interaction data to support adaptive difficulty and personalized recommendations.
+The exact setup may vary depending on the configured local TTS models.
 
 ---
 
-# Future Development
+# System Overview
 
-Memora can evolve beyond the current activity experience through several planned capabilities.
-
-### Adaptive Activities
-
-The system can adjust the difficulty of activities based on how the patient interacts with them.
-
-For example, repeated success could gradually introduce more challenging versions of an activity, while difficulty can be reduced when an activity becomes frustrating.
-
-### Personalized Recommendations
-
-The system can learn which activities are more engaging for an individual and recommend suitable activities.
-
-### Persistent Patient Profiles
-
-A backend and PostgreSQL database can allow patient and caretaker information to persist across sessions.
-
-### Caretaker Insights
-
-Future versions can provide useful activity summaries to caretakers, helping them understand engagement patterns over time.
-
-### Expanded Activity Library
-
-Additional activities can cover:
-
-* Memory recall
-* Object recognition
-* Sequencing
-* Familiar people
-* Familiar places
-* Daily routines
-* Visual matching
-* Everyday tasks
-
-### Multilingual Experiences
-
-The interface and activities can be expanded to support multiple languages, making Memora more accessible to diverse users.
+```text
+             MEMORA
+                │
+    ┌───────────┼───────────┐
+    ↓           ↓           ↓
+ Elderly     Caregiver   Healthcare
+  Portal       Portal      Portal
+    │           │           │
+    └───────────┼───────────┘
+                ↓
+      Personalization Engine
+                │
+        ┌───────┴───────┐
+        ↓               ↓
+     Local ML        Local TTS
+        │               │
+        └───────┬───────┘
+                ↓
+       Personalized Experience
+```
 
 ---
 
 # Why Memora?
 
-Memora is not simply about putting cognitive games on a screen.
+Memora combines:
 
-The central idea is **personalization through familiarity**.
+**Cognitive Games + Personalized Memories + Adaptive AI/ML + Offline Voice + 9-Language Support + Caregiver Monitoring + Healthcare Worker Monitoring**
 
-A generic puzzle is just a puzzle.
+Rather than providing only generic games, Memora creates a personalized cognitive assistance environment around the user's:
 
-A puzzle containing a familiar family photograph can become a meaningful interaction.
+* Memories
+* Family
+* Preferences
+* Routine
+* Language
+* Interaction history
 
-A generic question about someone's morning routine may feel like a test.
-
-A question built around **their own routine and familiar visual cues** can feel much more natural.
-
-Memora aims to bring this idea into a simple digital experience.
-
----
-
-# Project Status
-
-Memora is currently focused on the core patient and caretaker experience, with the architecture designed to support future backend, database, and AI capabilities.
-
-The immediate focus is on building an experience that is:
-
-**Accessible · Familiar · Simple · Personalized**
+The platform is designed to make cognitive engagement **more personal, accessible, multilingual, and usable in low-connectivity environments**.
 
 ---
 
-# Future Vision
+# Project Goals
 
-```text
-             CARETAKER
-                  │
-                  ▼
-        Personal Information
-                  │
-                  ▼
-        ┌───────────────────┐
-        │      MEMORA       │
-        │                   │
-        │ Personalization   │
-        │ + Activities      │
-        │ + AI              │
-        └─────────┬─────────┘
-                  │
-                  ▼
-               PATIENT
-                  │
-                  ▼
-          Activity Interaction
-                  │
-                  ▼
-           Engagement Data
-                  │
-                  ▼
-       Better Recommendations
-                  │
-                  └──────────►
-```
+Memora aims to provide:
 
-The long-term vision for Memora is to create a **personalized digital companion that adapts to the individual**, while remaining simple enough to use comfortably.
+* Personalized cognitive engagement
+* Accessible elderly-friendly interaction
+* Familiar memory-based activities
+* Adaptive difficulty
+* Offline AI/ML personalization
+* Offline multilingual voice assistance
+* Caregiver involvement
+* Healthcare-worker monitoring
+* Support for regional languages
+* Reduced dependence on continuous internet connectivity
 
 ---
-
-## Built With
-
-**React · TypeScript · Vite · Tailwind CSS · FastAPI · PyTorch · ONNX Runtime**
-
----
-
-## Offline Multilingual Text-to-Speech (TTS)
-
-Memora includes a 100% offline, locally hosted neural Text-to-Speech service specifically optimized for North Eastern Region (NER) languages, operating on standard commodity CPUs without cloud or GPU requirements.
-
-### Supported Regional Languages & Models
-
-| Language | Code | Model Architecture | Local Model Name | Status |
-| :--- | :---: | :--- | :--- | :---: |
-| **English** | `en` | Meta MMS VITS | `facebook/mms-tts-eng` | Supported |
-| **Assamese** | `as` | Meta MMS VITS | `facebook/mms-tts-asm` | Supported |
-| **Bengali** | `bn` | Meta MMS VITS | `facebook/mms-tts-ben` | Supported |
-| **Nepali** | `ne` | Kala VITS ONNX | `ampixa/real-nepali-v0.2-kala` | Supported |
-| **Mizo** | `lus` | Sulabh VITS | `sulabhkatiyar/indian-ne-multilingual-tts` | Supported |
-| **Nyishi** | `ny` | Sulabh VITS | `sulabhkatiyar/indian-ne-multilingual-tts` | Supported |
-| **Kokborok** | `trp` | Sulabh VITS | `sulabhkatiyar/indian-ne-multilingual-tts` | Supported |
-| **Khasi** | `kha` | *None open* | *No open offline weights available globally* | Handled (503 Informational) |
-
-### Local Model Storage
-Model checkpoints and configurations are stored in the local cache:
-- Meta MMS: `~/.cache/huggingface/hub/models--facebook--mms-tts-*`
-- Sulabh NE Multilingual: `~/.cache/huggingface/hub/models--sulabhkatiyar--indian-ne-multilingual-tts`
-- Kala Nepali ONNX: Local runtime cache (`~/.cache/kala_tts` / site-packages)
-*(Note: Large binary model weights are excluded from Git via `.gitignore`).*
-
-### Required Python Dependencies
-```text
-torch>=2.4.0
-torchaudio>=2.1.0
-transformers>=4.42.0,<4.43.0
-scipy>=1.13.0,<1.14.0
-numpy>=1.26.0,<2.0.0
-soundfile>=0.12.0
-coqui-tts>=0.27.0
-kala-tts>=0.1.4
-onnxruntime>=1.20.0
-```
-
-### Running 100% Offline
-
-1. **Start the FastAPI Backend**:
-   ```powershell
-   # Enforce complete offline isolation
-   $env:HF_HUB_OFFLINE="1"
-   $env:TRANSFORMERS_OFFLINE="1"
-
-   # Run FastAPI server
-   python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
-   ```
-
-2. **Start the Frontend UI**:
-   ```powershell
-   npm run dev
-   ```
-
-3. **Testing `/tts` API directly**:
-   ```powershell
-   curl -X POST "http://localhost:8000/tts" `
-     -H "Content-Type: application/json" `
-     -d '{"text": "Hello, how are you feeling today?", "language": "en"}' `
-     --output speech.wav
-   ```
-
-4. **License & Attributions**:
-   - Meta MMS models: CC-BY-NC 4.0.
-   - Kala TTS & ONNX Nepali runtime: Apache 2.0.
-   - Sulabh NE Multilingual model: Open-source research checkpoint.
-
 
